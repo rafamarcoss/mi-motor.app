@@ -34,7 +34,8 @@ export class MitecoFuelPriceProvider {
     const field = fuel === 'gasoline' ? 'Precio Gasolina 95 E5' : 'Precio Gasoleo A';
     const target = normaliseText(zone);
     const municipalityRows = this.rowsFor(rows, 'Municipio', target, field);
-    const provinceRows = this.rowsFor(rows, 'Provincia', target, field);
+    const province = municipalityRows[0]?.Provincia || zone;
+    const provinceRows = this.rowsFor(rows, 'Provincia', normaliseText(province), field);
     const selected = municipalityRows.length >= 3 ? municipalityRows : provinceRows;
     if (selected.length === 0) {
       throw new ProviderError('FUEL_ZONE_NOT_FOUND', `No hay precios disponibles para "${zone}".`, 422);

@@ -46,10 +46,11 @@ test('usa provincia cuando el municipio tiene poca muestra', async () => {
       ]
     }))
   });
-  const result = await provider.average('Córdoba', 'gasoline');
+  const result = await provider.average('Pueblo', 'gasoline');
   assert.equal(result.averagePrice, 1.6);
   assert.equal(result.areaType, 'province');
   assert.equal(result.sampleSize, 3);
+  assert.equal(result.area, 'CÓRDOBA');
 });
 
 test('openrouteservice geocodifica y calcula la ruta en dos peticiones', async () => {
