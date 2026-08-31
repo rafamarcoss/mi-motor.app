@@ -15,8 +15,8 @@
 ## P2: datos deterministas
 
 - [x] Cálculo de consumo ajustado y casos reproducibles.
-- [ ] Adapter de routing y geocoding (openrouteservice evaluado).
-- [ ] Adapter de precios medios oficiales de carburantes (REST evaluado).
+- [x] Adapter de routing y geocoding (openrouteservice, mock probado; clave pendiente).
+- [x] Adapter de precios medios oficiales de carburantes (REST oficial probado).
 - [ ] Ficha normalizada de vehículos con fuente y fecha.
 
 ## P3+: backend y contenido

@@ -27,3 +27,5 @@ npx wrangler secret put RATE_LIMIT_SECRET
 4. Despliega con `npx wrangler deploy`.
 
 Wrangler usa `wrangler login` localmente o `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en CI; esas variables no se leen en el código. Después habrá que configurar el frontend para llamar al endpoint del Worker bajo `/api/trip` mediante un proxy o URL allowlisted.
+
+Cuando el Worker esté publicado, define `window.MIMOTOR_API_URL` antes de `js/trip-api.js` o enruta `/api/*` al Worker. Sin esa variable, el frontend sigue usando su cálculo local.

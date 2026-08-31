@@ -26,6 +26,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="js/calculator-core.js"></script>
+<script src="js/trip-api.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   * { margin: 0; padding: 0; }
@@ -82,6 +83,7 @@
   .btn-dark:hover { background: #2b2e28; }
   .btn-lime { background: var(--accent); color: var(--text); border-color: var(--accent); }
   .btn-lime:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn:disabled { opacity: 0.65; cursor: wait; }
 
   /* ---------- hero + calculadora ---------- */
   .hero { padding: 42px 0 46px; }
@@ -525,6 +527,7 @@
 
 <script>
 (function () {
+  var button = document.getElementById('btn-calc');
   var vehicle = document.getElementById('f-vehiculo');
   var origen = document.getElementById('f-origen');
   var destino = document.getElementById('f-destino');
@@ -544,7 +547,7 @@
     return n.toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
-  function calc() {
+  function calcLocal() {
     var result = MiMotorCalculator.calculateTrip({
       distance: dist.value,
       baseConsumption: cons.value,
@@ -575,8 +578,52 @@
     rNota.textContent = 'Estimación local · el routing y el precio real se conectarán mediante backend.';
   }
 
-  document.getElementById('btn-calc').addEventListener('click', function () {
-    calc();
+  function renderRemote(result) {
+    var route = result.route;
+    var fuel = result.fuel;
+    var consumption = result.consumption;
+    var cost = result.cost;
+    var car = result.vehicle;
+    rRuta.textContent = (route.origin || origen.value || 'Origen') + ' → ' + (route.destination || destino.value || 'Destino') + ' · ' + fmt(route.distanceKm, 0) + ' km';
+    rCoste.textContent = fmt(cost.estimated, 2) + ' €';
+    rLitros.textContent = fmt(cost.liters, 2) + ' L';
+    rCoste100.textContent = fmt(cost.per100Km, 2) + ' €';
+    rRango.textContent = 'Rango probable: ' + fmt(cost.min, 2) + ' € – ' + fmt(cost.max, 2) + ' €';
+    rExplanation.textContent = (car.make + ' ' + car.model) + ': base ' + fmt(consumption.base, 1) + ' L/100 km, ajuste ' + driving.options[driving.selectedIndex].text.toLowerCase() + ', precio medio ' + fmt(fuel.averagePrice, 3) + ' €/L en ' + fuel.area + '.';
+    rNota.textContent = 'Fuente carburante: ' + fuel.source + (fuel.fallback ? ' · último dato disponible' : '');
+  }
+
+  function renderError(error) {
+    rCoste.textContent = '—';
+    rLitros.textContent = '—';
+    rCoste100.textContent = '—';
+    rRango.textContent = 'Rango probable: —';
+    rExplanation.textContent = error.message || 'No se pudo completar el cálculo.';
+    rNota.textContent = 'No se ha mostrado una estimación sin datos verificables.';
+  }
+
+  button.addEventListener('click', async function () {
+    var originalLabel = button.textContent;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    rNota.textContent = MiMotorTripApi.isConfigured() ? 'Consultando ruta, vehículo y carburante…' : 'Calculando con los datos locales…';
+    try {
+      var remote = await MiMotorTripApi.calculate({
+        vehicle: vehicle.value,
+        origin: origen.value,
+        destination: destino.value,
+        drivingMode: driving.value,
+        advanced: {}
+      });
+      if (remote) renderRemote(remote);
+      else calcLocal();
+    } catch (error) {
+      renderError(error);
+    } finally {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.textContent = originalLabel;
+    }
     if (window.innerWidth < 980) {
       document.querySelector('.calc-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
