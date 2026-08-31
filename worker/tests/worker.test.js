@@ -28,8 +28,10 @@ test('construye un viaje con vehículo conocido sin llamar a IA', async () => {
   }, { store: new MemoryStore(), providers: providers(), env: {} });
 
   assert.equal(result.route.distanceKm, 245);
+  assert.equal(result.route.cached, false);
   assert.equal(result.vehicle.fuel, 'diesel');
   assert.equal(result.fuel.averagePrice, 1.48);
+  assert.equal(result.fuel.cached, false);
   assert.equal(result.cost.liters, 14.95);
   assert.equal(result.cost.estimated, 22.13);
   assert.equal(result.usage.remainingAiCalculations, null);
@@ -89,7 +91,11 @@ test('cachea una normalización IA y no consume cuota en la segunda consulta', a
 
   assert.equal(calls, 1);
   assert.equal(first.vehicle.cached, false);
-  assert.equal(second.vehicle.cached, false);
+  assert.equal(second.vehicle.cached, true);
+  assert.equal(first.route.cached, false);
+  assert.equal(second.route.cached, true);
+  assert.equal(first.fuel.cached, false);
+  assert.equal(second.fuel.cached, true);
   assert.equal(second.usage.remainingAiCalculations, 2);
 });
 
@@ -115,7 +121,7 @@ test('un vehículo cacheado sigue funcionando aunque la cuota IA esté agotada',
   await limiter.consume(request);
   const cached = await buildTrip(payload, { store, providers: providers(ai), env, request });
   assert.equal(calls, 1);
-  assert.equal(cached.vehicle.cached, false);
+  assert.equal(cached.vehicle.cached, true);
   assert.equal(cached.usage.remainingAiCalculations, 0);
 });
 

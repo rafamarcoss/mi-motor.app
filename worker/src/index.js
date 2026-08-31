@@ -83,7 +83,7 @@ async function resolveVehicle(input, { env, request, store, persistentStore, pro
 
   const inputKey = `vehicle-input:${input.toLowerCase().replace(/\s+/g, '-')}`;
   const cached = await store.get(inputKey);
-  if (cached) return cached;
+  if (cached) return { ...cached, cached: true };
   if (!env.DEEPSEEK_API_KEY) throw new ApiError('VEHICLE_NEEDS_PRECISION', 'No se pudo identificar la motorización sin una fuente configurada.', 422);
   if (!persistentStore) throw new ApiError('AI_RATE_LIMIT_NOT_CONFIGURED', 'El límite IA necesita un namespace KV persistente.', 503);
 
@@ -120,10 +120,10 @@ function createProviders(env) {
 
 async function getOrFetch(store, key, ttl, fetcher) {
   const cached = await store.get(key);
-  if (cached) return cached;
+  if (cached) return { ...cached, cached: true };
   const value = await fetcher();
   await store.put(key, value, ttl);
-  return value;
+  return { ...value, cached: false };
 }
 
 async function getFuel(store, key, provider, fuel, zone) {
@@ -133,7 +133,7 @@ async function getFuel(store, key, provider, fuel, zone) {
     const value = await provider.average(zone, fuel);
     await store.put(key, value, CACHE_TTL.fuel);
     await store.put(`${key}:stale`, value, 7 * 24 * 3600);
-    return value;
+    return { ...value, cached: false };
   } catch (error) {
     const stale = await store.get(`${key}:stale`);
     if (stale) return { ...stale, cached: true, fallback: true, stale: true };

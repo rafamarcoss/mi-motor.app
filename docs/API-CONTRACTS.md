@@ -18,6 +18,8 @@ La respuesta compone la ficha del vehículo, la ruta, el precio de combustible, 
 
 El Worker geocodifica, valida el país, limita longitud y cachea por origen/destino normalizados. El cliente no llama a proveedores externos.
 
+En runtime, `route`, `vehicle` y `fuel` incluyen `cached: false` en un miss y `cached: true` en un hit. Es metadata de observabilidad y no cambia la matemática.
+
 ## Providers internos
 
 - `RoutingProvider`: openrouteservice v2 con geocoding y `directions/driving-car`.
