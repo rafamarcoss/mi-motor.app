@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiMotor — Cuánto te cuesta realmente usar tu coche</title>
+<meta name="description" content="Calcula el coste de tus viajes, tu consumo real, el mantenimiento y las averías de tu coche. Herramientas prácticas para dueños de coches.">
+<link rel="canonical" href="https://mi-motor.app/">
+<meta property="og:title" content="MiMotor — Cuánto te cuesta realmente usar tu coche">
+<meta property="og:description" content="Calcula el coste de tus viajes, tu consumo real, el mantenimiento y las averías de tu coche.">
+<meta property="og:url" content="https://mi-motor.app/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23181b16'/%3E%3Crect x='6' y='6' width='20' height='20' rx='3' fill='%23c8ff00'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f2;
+    --surface: #ffffff;
+    --text: #171915;
+    --muted: #686b64;
+    --border: #d8dad3;
+    --accent: #c8ff00;
+    --accent-hover: #b7e900;
+    --dark: #181b16;
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  :focus-visible { outline: 2px solid var(--dark); outline-offset: 2px; }
+
+  /* ---------- header ---------- */
+  .site-header {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner { display: flex; align-items: center; gap: 28px; height: 54px; }
+  .brand { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand-mark { width: 11px; height: 11px; border-radius: 2px; background: var(--accent); border: 1px solid #a9d400; }
+  .main-nav { display: flex; gap: 20px; }
+  .main-nav a { font-size: 13px; font-weight: 500; color: var(--muted); padding: 6px 0; }
+  .main-nav a:hover { color: var(--text); }
+  .header-cta { margin-left: auto; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 38px; padding: 0 16px;
+    border-radius: 6px; border: 1px solid transparent;
+    font: 600 13.5px 'Inter', sans-serif; cursor: pointer; white-space: nowrap;
+  }
+  .btn-dark { background: var(--dark); color: #fff; border-color: var(--dark); }
+  .btn-dark:hover { background: #2b2e28; }
+  .btn-lime { background: var(--accent); color: var(--text); border-color: var(--accent); }
+  .btn-lime:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+  /* ---------- hero + calculadora ---------- */
+  .hero { padding: 42px 0 46px; }
+  .hero h1 { font-size: clamp(26px, 3.3vw, 37px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; max-width: 660px; }
+  .hero-sub { margin-top: 10px; color: var(--muted); font-size: 15.5px; max-width: 540px; }
+
+  .calc {
+    margin-top: 26px;
+    display: grid; grid-template-columns: minmax(0, 1fr) 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    scroll-margin-top: 80px;
+  }
+  .calc-form { padding: 18px 22px 20px; min-width: 0; }
+  .calc-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .calc-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .car-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; font-size: 12.5px; color: var(--text); background: var(--bg);
+  }
+  .car-chip strong { font-weight: 600; }
+  .car-chip .sep { color: var(--border); }
+  .car-chip .change { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+  .car-chip .change:hover { color: var(--text); }
+
+  .fields { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 14px; margin-top: 16px; }
+  .field { display: flex; flex-direction: column; }
+  .field.span3 { grid-column: span 3; }
+  .field.span2 { grid-column: span 2; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+  .field input {
+    width: 100%; height: 38px; padding: 0 11px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text);
+    font: 400 14px 'Inter', sans-serif;
+  }
+  .field input:focus { outline: none; border-color: var(--text); }
+  .field input::placeholder { color: #a6a8a1; }
+
+  .calc-actions { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+  .calc-actions .note { font-size: 12.5px; color: var(--muted); }
+
+  .calc-results {
+    background: var(--dark); color: #fff;
+    padding: 18px 22px 20px;
+    display: flex; flex-direction: column;
+  }
+  .res-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .res-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+  .res-chip {
+    font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 3px 8px;
+  }
+  .res-route { margin-top: 12px; font-size: 13.5px; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums; }
+  .res-main { margin-top: 18px; }
+  .res-main .k { font-size: 12.5px; color: rgba(255,255,255,0.6); }
+  .res-main .v { margin-top: 2px; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.14); }
+  .res-grid .k { font-size: 12px; color: rgba(255,255,255,0.55); }
+  .res-grid .v { margin-top: 3px; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .res-note { margin-top: auto; padding-top: 16px; font-size: 11.5px; color: rgba(255,255,255,0.45); }
+
+  /* ---------- secciones ---------- */
+  .section { border-top: 1px solid var(--border); padding: 38px 0 42px; scroll-margin-top: 70px; }
+  .overline { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .section h2 { margin-top: 4px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+
+  /* mi coche */
+  .car-panel {
+    margin-top: 18px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    display: grid; grid-template-columns: 320px minmax(0, 1fr);
+    overflow: hidden; scroll-margin-top: 80px;
+  }
+  .car-id { padding: 18px 22px 20px; border-right: 1px solid var(--border); }
+  .car-id .name { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .car-id .spec { margin-top: 2px; font-size: 13px; color: var(--muted); }
+  .odo { margin-top: 16px; }
+  .odo .k { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+  .odo .v { margin-top: 2px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .odo .note { margin-top: 3px; font-size: 12px; color: var(--muted); }
+
+  .car-stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .stat { padding: 18px 22px 20px; min-width: 0; }
+  .stat + .stat { border-left: 1px solid var(--border); }
+  .stat .k { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+  .stat .v { margin-top: 6px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .note { margin-top: 4px; font-size: 12px; color: var(--muted); }
+
+  /* herramientas */
+  .tools-grid {
+    margin-top: 18px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    display: grid; grid-template-columns: 1fr 1fr; overflow: hidden;
+  }
+  .tool { display: block; padding: 16px 22px 18px; min-width: 0; scroll-margin-top: 80px; }
+  .tool:hover { background: #fafaf7; }
+  .tool.no-right { border-right: 1px solid var(--border); }
+  .tool.no-bottom { border-bottom: 1px solid var(--border); }
+  .tool-top { display: flex; align-items: baseline; gap: 10px; }
+  .tool-num { font-size: 11px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tool h3 { font-size: 15px; font-weight: 600; }
+  .tool p { margin-top: 5px; font-size: 13px; color: var(--muted); max-width: 46ch; }
+  .tool .open { display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 600; }
+  .tool:hover .open { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* guías */
+  .guides-list { margin-top: 18px; border-top: 1px solid var(--border); }
+  .guide {
+    display: grid; grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 4px 14px; align-items: baseline;
+    padding: 13px 6px; border-bottom: 1px solid var(--border);
+  }
+  .guide:hover { background: #fafaf7; }
+  .guide .num { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .guide h3 { font-size: 15px; font-weight: 600; }
+  .guide h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .guide .excerpt { grid-column: 2 / -1; font-size: 13px; color: var(--muted); }
+  .guide .meta { font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .guide .meta .dot { margin: 0 6px; color: var(--border); }
+
+  /* footer */
+  .site-footer { background: var(--dark); color: rgba(255,255,255,0.72); margin-top: 0; }
+  .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 28px; padding: 34px 0 30px; }
+  .footer-brand .name { color: #fff; font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
+  .footer-brand .name .brand-mark { width: 10px; height: 10px; }
+  .footer-brand p { margin-top: 8px; font-size: 13px; max-width: 30ch; color: rgba(255,255,255,0.55); }
+  .footer-col h4 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+  .footer-col ul { list-style: none; margin-top: 10px; display: grid; gap: 7px; }
+  .footer-col a { font-size: 13px; color: rgba(255,255,255,0.72); }
+  .footer-col a:hover { color: #fff; }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.12);
+    padding: 14px 0 18px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    font-size: 12px; color: rgba(255,255,255,0.45);
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 980px) {
+    .calc { grid-template-columns: 1fr; }
+    .calc-results { border-top: 1px solid rgba(255,255,255,0.0); }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 860px) {
+    .header-inner { flex-wrap: wrap; height: auto; padding: 10px 0 0; row-gap: 0; }
+    .main-nav { order: 3; width: 100%; overflow-x: auto; gap: 18px; padding: 8px 0 10px; border-top: 1px solid var(--border); margin-top: 8px; }
+    .main-nav a { white-space: nowrap; }
+    .header-cta { margin-left: auto; }
+    .car-panel { grid-template-columns: 1fr; }
+    .car-id { border-right: 0; border-bottom: 1px solid var(--border); }
+    .car-stats { grid-template-columns: 1fr; }
+    .stat + .stat { border-left: 0; border-top: 1px solid var(--border); }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .hero { padding: 30px 0 34px; }
+    .fields { grid-template-columns: 1fr; }
+    .field.span3, .field.span2 { grid-column: span 1; }
+    .calc-actions .btn { width: 100%; }
+    .tools-grid { grid-template-columns: 1fr; }
+    .tool.no-right { border-right: 0; }
+    .tool:nth-child(1), .tool:nth-child(3) { border-bottom: 1px solid var(--border); }
+    .tool:nth-child(2) { border-bottom: 1px solid var(--border); }
+    .guide { grid-template-columns: 26px minmax(0, 1fr); }
+    .guide .meta { grid-column: 2; }
+    .guide .excerpt { display: none; }
+    .footer-grid { grid-template-columns: 1fr; gap: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span>MiMotor</a>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="#mi-coche">Mi coche</a>
+      <a href="#calculadoras">Calculadoras</a>
+      <a href="#mantenimiento">Mantenimiento</a>
+      <a href="#averias">Averías</a>
+      <a href="#guias">Guías</a>
+    </nav>
+    <a class="btn btn-dark header-cta" href="#mi-coche">Guardar mi coche</a>
+  </div>
+</header>
+
+<main>
+  <!-- HERO + CALCULADORA -->
+  <section class="hero">
+    <div class="wrap">
+      <h1>¿Cuánto te cuesta realmente usar tu coche?</h1>
+      <p class="hero-sub">Calcula viajes, consumo, mantenimiento y averías desde un mismo sitio.</p>
+
+      <div class="calc" id="calculadoras">
+        <div class="calc-form">
+          <div class="calc-top">
+            <span class="calc-label">Calculadora de viaje</span>
+            <span class="car-chip">
+              <strong>Opel Astra H GTC</strong><span class="sep">·</span>1.9 CDTI · 2010<span class="sep">·</span>Diésel
+              <a class="change" href="#mi-coche">Cambiar</a>
+            </span>
+          </div>
+
+          <form class="fields" id="trip-form" autocomplete="off">
+            <div class="field span3">
+              <label for="f-origen">Origen</label>
+              <input type="text" id="f-origen" value="Córdoba" placeholder="Ciudad de salida">
+            </div>
+            <div class="field span3">
+              <label for="f-destino">Destino</label>
+              <input type="text" id="f-destino" value="Málaga" placeholder="Ciudad de llegada">
+            </div>
+            <div class="field span2">
+              <label for="f-distancia">Distancia (km)</label>
+              <input type="text" inputmode="decimal" id="f-distancia" value="165" placeholder="165">
+            </div>
+            <div class="field span2">
+              <label for="f-consumo">Consumo medio (L/100 km)</label>
+              <input type="text" inputmode="decimal" id="f-consumo" value="6,1" placeholder="6,1">
+            </div>
+            <div class="field span2">
+              <label for="f-precio">Precio combustible (€/L)</label>
+              <input type="text" inputmode="decimal" id="f-precio" value="1,455" placeholder="1,455">
+            </div>
+          </form>
+
+          <div class="calc-actions">
+            <button type="button" class="btn btn-lime" id="btn-calc">Calcular viaje</button>
+            <span class="note">Los resultados se actualizan al editar los datos.</span>
+          </div>
+        </div>
+
+        <div class="calc-results" aria-live="polite">
+          <div class="res-top">
+            <span class="res-label">Resultado estimado</span>
+            <span class="res-chip">Ida</span>
+          </div>
+          <p class="res-route" id="r-ruta">Córdoba → Málaga · 165 km</p>
+          <div class="res-main">
+            <div class="k">Coste combustible</div>
+            <div class="v" id="r-coste">14,65 €</div>
+          </div>
+          <div class="res-grid">
+            <div>
+              <div class="k">Combustible necesario</div>
+              <div class="v" id="r-litros">10,07 L</div>
+            </div>
+            <div>
+              <div class="k">Coste por 100 km</div>
+              <div class="v" id="r-coste100">8,88 €</div>
+            </div>
+          </div>
+          <p class="res-note" id="r-nota">Consumo 6,1 L/100 km · Gasóleo a 1,455 €/L</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MI COCHE -->
+  <section class="section" id="mi-coche">
+    <div class="wrap">
+      <p class="overline">Mi coche</p>
+      <h2>Opel Astra H GTC</h2>
+
+      <div class="car-panel">
+        <div class="car-id">
+          <div class="name">Opel Astra H GTC</div>
+          <div class="spec">1.9 CDTI · Diésel · 2010</div>
+          <div class="odo">
+            <div class="k">Kilómetros</div>
+            <div class="v">187.420 km</div>
+            <div class="note">Actualizado con tu último repostaje</div>
+          </div>
+        </div>
+        <div class="car-stats">
+          <div class="stat">
+            <div class="k">Consumo medio</div>
+            <div class="v">6,1 L/100 km</div>
+            <div class="note">Media de tus últimos 5 repostajes</div>
+          </div>
+          <div class="stat">
+            <div class="k">Último precio combustible</div>
+            <div class="v">1,455 €/L</div>
+            <div class="note">Gasóleo A · actualizado hoy</div>
+          </div>
+          <div class="stat">
+            <div class="k">Próximo mantenimiento</div>
+            <div class="v">2.580 km</div>
+            <div class="note">Aceite, filtro de aceite y filtro de aire</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HERRAMIENTAS -->
+  <section class="section" id="herramientas">
+    <div class="wrap">
+      <p class="overline">Herramientas</p>
+      <h2>Cuatro calculadoras, un solo registro</h2>
+
+      <div class="tools-grid">
+        <a class="tool no-right no-bottom" href="#calculadoras" id="tool-viaje">
+          <span class="tool-top"><span class="tool-num">01</span><h3>Calcular viaje</h3></span>
+          <p>Combustible y coste entre dos puntos usando tu consumo real, no el del catálogo.</p>
+          <span class="open">Abrir →</span>
+        </a>
+        <a class="tool no-bottom" href="#mi-coche" id="tool-consumo">
+          <span class="tool-top"><span class="tool-num">02</span><h3>Consumo real</h3></span>
+          <p>Apunta cada repostaje y obtén tu consumo medio verdadero, lleno a lleno.</p>
+          <span class="open">Abrir →</span>
+        </a>
+        <a class="tool no-right" href="#mi-coche" id="mantenimiento">
+          <span class="tool-top"><span class="tool-num">03</span><h3>Mantenimiento</h3></span>
+          <p>Qué le toca a tu coche según los kilómetros: aceite, filtros, correa, frenos.</p>
+          <span class="open">Abrir →</span>
+        </a>
+        <a class="tool" href="#guias" id="averias">
+          <span class="tool-top"><span class="tool-num">04</span><h3>Averías</h3></span>
+          <p>Síntomas frecuentes, causas probables y coste orientativo antes de ir al taller.</p>
+          <span class="open">Abrir →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- GUÍAS -->
+  <section class="section" id="guias">
+    <div class="wrap">
+      <p class="overline">Guías</p>
+      <h2>Entender tu coche, sin tecnicismos</h2>
+
+      <div class="guides-list">
+        <article class="guide">
+          <span class="num">01</span>
+          <h3><a href="#">Qué significa realmente el consumo de tu coche</a></h3>
+          <span class="meta">Consumo<span class="dot">·</span>6 min</span>
+          <p class="excerpt">El dato del catálogo se mide en condiciones que no existen. Esto es lo que deberías mirar.</p>
+        </article>
+        <article class="guide">
+          <span class="num">02</span>
+          <h3><a href="#">Cada cuánto cambiar aceite y filtros</a></h3>
+          <span class="meta">Mantenimiento<span class="dot">·</span>5 min</span>
+          <p class="excerpt">Intervalos realistas según km y tipo de uso, y qué pasa si los estiras demasiado.</p>
+        </article>
+        <article class="guide">
+          <span class="num">03</span>
+          <h3><a href="#">Síntomas de una EGR defectuosa</a></h3>
+          <span class="meta">Averías<span class="dot">·</span>7 min</span>
+          <p class="excerpt">Pérdida de potencia, humo, luz de motor: cómo distinguir la EGR de otras averías.</p>
+        </article>
+        <article class="guide">
+          <span class="num">04</span>
+          <h3><a href="#">Cómo calcular el coste real de un viaje</a></h3>
+          <span class="meta">Viajes<span class="dot">·</span>4 min</span>
+          <p class="excerpt">La fórmula que usa la calculadora, explicada paso a paso y con ejemplo.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="name"><span class="brand-mark" aria-hidden="true"></span>MiMotor</span>
+        <p>Herramientas prácticas para dueños de coches. Sin humo y sin cifras de catálogo.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Herramientas</h4>
+        <ul>
+          <li><a href="#calculadoras">Calcular viaje</a></li>
+          <li><a href="#mi-coche">Consumo real</a></li>
+          <li><a href="#mantenimiento">Mantenimiento</a></li>
+          <li><a href="#averias">Averías</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Guías</h4>
+        <ul>
+          <li><a href="#guias">El consumo de tu coche</a></li>
+          <li><a href="#guias">Aceite y filtros</a></li>
+          <li><a href="#guias">EGR defectuosa</a></li>
+          <li><a href="#guias">Coste real de un viaje</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacidad</a></li>
+          <li><a href="#">Contacto</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MiMotor</span>
+      <span>Hecho en Córdoba</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var origen = document.getElementById('f-origen');
+  var destino = document.getElementById('f-destino');
+  var dist = document.getElementById('f-distancia');
+  var cons = document.getElementById('f-consumo');
+  var price = document.getElementById('f-precio');
+  var rRuta = document.getElementById('r-ruta');
+  var rCoste = document.getElementById('r-coste');
+  var rLitros = document.getElementById('r-litros');
+  var rCoste100 = document.getElementById('r-coste100');
+  var rNota = document.getElementById('r-nota');
+
+  function parseNum(v) {
+    var n = parseFloat(String(v).replace(/\s/g, '').replace(',', '.'));
+    return isNaN(n) ? 0 : n;
+  }
+  function fmt(n, dec) {
+    return n.toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+
+  function calc() {
+    var d = parseNum(dist.value);
+    var c = parseNum(cons.value);
+    var p = parseNum(price.value);
+    var o = origen.value.trim() || 'Origen';
+    var dst = destino.value.trim() || 'Destino';
+
+    rRuta.textContent = o + ' → ' + dst + ' · ' + fmt(d, 0) + ' km';
+    rNota.textContent = 'Consumo ' + fmt(c, 1) + ' L/100 km · Gasóleo a ' + fmt(p, 3) + ' €/L';
+
+    if (d <= 0 || c <= 0 || p <= 0) {
+      rCoste.textContent = '—';
+      rLitros.textContent = '—';
+      rCoste100.textContent = '—';
+      return;
+    }
+    var liters = Math.round(d * c / 100 * 100) / 100;
+    var cost = Math.round(liters * p * 100) / 100;
+    var per100 = Math.round(c * p * 100) / 100;
+    rLitros.textContent = fmt(liters, 2) + ' L';
+    rCoste.textContent = fmt(cost, 2) + ' €';
+    rCoste100.textContent = fmt(per100, 2) + ' €';
+  }
+
+  ['input', 'change'].forEach(function (ev) {
+    [origen, destino, dist, cons, price].forEach(function (el) {
+      el.addEventListener(ev, calc);
+    });
+  });
+
+  document.getElementById('btn-calc').addEventListener('click', function () {
+    calc();
+    if (window.innerWidth < 980) {
+      document.querySelector('.calc-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+
+  calc();
+})();
+</script>
+</body>
+</html>
