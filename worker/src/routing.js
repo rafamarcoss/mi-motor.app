@@ -28,7 +28,7 @@ export class OpenRouteServiceProvider {
   async route(origin, destination) {
     if (!this.apiKey) throw new ProviderError('ROUTING_NOT_CONFIGURED', 'Falta OPENROUTESERVICE_API_KEY.', 503);
     const [start, end] = await Promise.all([this.geocode(origin), this.geocode(destination)]);
-    const response = await this.request(`${ORS_URL}/v2/directions/driving-car/json`, {
+    const response = await this.request(`${ORS_URL}/openrouteservice/v2/directions/driving-car/json`, {
       method: 'POST',
       headers: {
         Authorization: this.apiKey,
