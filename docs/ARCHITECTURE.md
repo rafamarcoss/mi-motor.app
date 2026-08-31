@@ -16,6 +16,7 @@
    - `VehicleProvider`: entrada libre → ficha normalizada y fuente.
    - `AIProvider`: prompt estructurado → respuesta validada.
 4. Cachear fichas de vehículos y precios en backend. Nunca en el navegador datos sensibles ni credenciales.
+5. Los payloads previstos están en [`docs/API-CONTRACTS.md`](API-CONTRACTS.md); `.env.example` solo enumera variables del runtime serverless.
 
 ## Fuentes evaluadas
 
