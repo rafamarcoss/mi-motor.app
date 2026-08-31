@@ -25,6 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="js/calculator-core.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   * { margin: 0; padding: 0; }
@@ -111,6 +112,7 @@
 
   .fields { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 14px; margin-top: 16px; }
   .field { display: flex; flex-direction: column; }
+  .field.span6 { grid-column: span 6; }
   .field.span3 { grid-column: span 3; }
   .field.span2 { grid-column: span 2; }
   .field label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
@@ -122,6 +124,19 @@
   }
   .field input:focus { outline: none; border-color: var(--text); }
   .field input::placeholder { color: #a6a8a1; }
+  .field select {
+    width: 100%; height: 38px; padding: 0 11px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text);
+    font: 400 14px 'Inter', sans-serif;
+  }
+  .field select:focus { outline: none; border-color: var(--text); }
+
+  .advanced-fields { grid-column: span 6; border-top: 1px solid var(--border); padding-top: 12px; }
+  .advanced-fields summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .advanced-fields summary::marker { color: var(--text); }
+  .advanced-fields[open] summary { margin-bottom: 12px; color: var(--text); }
+  .advanced-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 14px; }
 
   .calc-actions { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
   .calc-actions .note { font-size: 12.5px; color: var(--muted); }
@@ -145,6 +160,8 @@
   .res-grid .k { font-size: 12px; color: rgba(255,255,255,0.55); }
   .res-grid .v { margin-top: 3px; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .res-note { margin-top: auto; padding-top: 16px; font-size: 11.5px; color: rgba(255,255,255,0.45); }
+  .res-range { margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.78); }
+  .res-explanation { margin-top: 10px; font-size: 11.5px; line-height: 1.45; color: rgba(255,255,255,0.52); }
 
   /* ---------- secciones ---------- */
   .section { border-top: 1px solid var(--border); padding: 38px 0 42px; scroll-margin-top: 70px; }
@@ -240,8 +257,9 @@
   @media (max-width: 640px) {
     .wrap { padding: 0 16px; }
     .hero { padding: 30px 0 34px; }
-    .fields { grid-template-columns: 1fr; }
-    .field.span3, .field.span2 { grid-column: span 1; }
+    .fields, .advanced-grid { grid-template-columns: 1fr; }
+    .field.span6, .field.span3, .field.span2 { grid-column: span 1; }
+    .advanced-fields { grid-column: span 1; }
     .calc-actions .btn { width: 100%; }
     .tools-grid { grid-template-columns: 1fr; }
     .tool.no-right { border-right: 0; }
@@ -288,6 +306,10 @@
           </div>
 
           <form class="fields" id="trip-form" autocomplete="off">
+            <div class="field span6">
+              <label for="f-vehiculo">Vehículo</label>
+              <input type="text" id="f-vehiculo" value="Opel Astra H GTC · 2010 · 1.9 CDTI" placeholder="Marca, modelo, año y motor">
+            </div>
             <div class="field span3">
               <label for="f-origen">Origen</label>
               <input type="text" id="f-origen" value="Córdoba" placeholder="Ciudad de salida">
@@ -297,22 +319,35 @@
               <input type="text" id="f-destino" value="Málaga" placeholder="Ciudad de llegada">
             </div>
             <div class="field span2">
-              <label for="f-distancia">Distancia (km)</label>
-              <input type="text" inputmode="decimal" id="f-distancia" value="165" placeholder="165">
+              <label for="f-conduccion">Conducción</label>
+              <select id="f-conduccion">
+                <option value="tranquilo">Tranquilo</option>
+                <option value="normal" selected>Normal</option>
+                <option value="sport">Sport</option>
+              </select>
             </div>
-            <div class="field span2">
-              <label for="f-consumo">Consumo medio (L/100 km)</label>
-              <input type="text" inputmode="decimal" id="f-consumo" value="6,1" placeholder="6,1">
-            </div>
-            <div class="field span2">
-              <label for="f-precio">Precio combustible (€/L)</label>
-              <input type="text" inputmode="decimal" id="f-precio" value="1,455" placeholder="1,455">
-            </div>
+            <details class="advanced-fields">
+              <summary>Ajustar cálculo</summary>
+              <div class="advanced-grid">
+                <div class="field span2">
+                  <label for="f-distancia">Distancia (km)</label>
+                  <input type="text" inputmode="decimal" id="f-distancia" value="165" placeholder="165">
+                </div>
+                <div class="field span2">
+                  <label for="f-consumo">Consumo base (L/100 km)</label>
+                  <input type="text" inputmode="decimal" id="f-consumo" value="6,1" placeholder="6,1">
+                </div>
+                <div class="field span2">
+                  <label for="f-precio">Precio combustible (€/L)</label>
+                  <input type="text" inputmode="decimal" id="f-precio" value="1,455" placeholder="1,455">
+                </div>
+              </div>
+            </details>
           </form>
 
           <div class="calc-actions">
-            <button type="button" class="btn btn-lime" id="btn-calc">Calcular viaje</button>
-            <span class="note">Los resultados se actualizan al editar los datos.</span>
+            <button type="button" class="btn btn-lime" id="btn-calc">Calcular mi viaje</button>
+            <span class="note">Una estimación por pulsación. Ajusta los datos avanzados si los conoces.</span>
           </div>
         </div>
 
@@ -321,22 +356,24 @@
             <span class="res-label">Resultado estimado</span>
             <span class="res-chip">Ida</span>
           </div>
-          <p class="res-route" id="r-ruta">Córdoba → Málaga · 165 km</p>
+          <p class="res-route" id="r-ruta">Indica origen y destino para empezar</p>
           <div class="res-main">
             <div class="k">Coste combustible</div>
-            <div class="v" id="r-coste">14,65 €</div>
+            <div class="v" id="r-coste">—</div>
           </div>
           <div class="res-grid">
             <div>
               <div class="k">Combustible necesario</div>
-              <div class="v" id="r-litros">10,07 L</div>
+              <div class="v" id="r-litros">—</div>
             </div>
             <div>
               <div class="k">Coste por 100 km</div>
-              <div class="v" id="r-coste100">8,88 €</div>
+              <div class="v" id="r-coste100">—</div>
             </div>
           </div>
-          <p class="res-note" id="r-nota">Consumo 6,1 L/100 km · Gasóleo a 1,455 €/L</p>
+          <p class="res-range" id="r-rango">Rango probable: —</p>
+          <p class="res-explanation" id="r-explicacion">El cálculo aparecerá aquí con una explicación de los datos utilizados.</p>
+          <p class="res-note" id="r-nota">Sin llamadas IA ni datos enviados mientras escribes.</p>
         </div>
       </div>
     </div>
@@ -488,8 +525,10 @@
 
 <script>
 (function () {
+  var vehicle = document.getElementById('f-vehiculo');
   var origen = document.getElementById('f-origen');
   var destino = document.getElementById('f-destino');
+  var driving = document.getElementById('f-conduccion');
   var dist = document.getElementById('f-distancia');
   var cons = document.getElementById('f-consumo');
   var price = document.getElementById('f-precio');
@@ -497,45 +536,44 @@
   var rCoste = document.getElementById('r-coste');
   var rLitros = document.getElementById('r-litros');
   var rCoste100 = document.getElementById('r-coste100');
+  var rRango = document.getElementById('r-rango');
+  var rExplanation = document.getElementById('r-explicacion');
   var rNota = document.getElementById('r-nota');
 
-  function parseNum(v) {
-    var n = parseFloat(String(v).replace(/\s/g, '').replace(',', '.'));
-    return isNaN(n) ? 0 : n;
-  }
   function fmt(n, dec) {
     return n.toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
   function calc() {
-    var d = parseNum(dist.value);
-    var c = parseNum(cons.value);
-    var p = parseNum(price.value);
+    var result = MiMotorCalculator.calculateTrip({
+      distance: dist.value,
+      baseConsumption: cons.value,
+      fuelPrice: price.value,
+      driving: driving.value
+    });
     var o = origen.value.trim() || 'Origen';
     var dst = destino.value.trim() || 'Destino';
+    var car = vehicle.value.trim() || 'tu coche';
 
-    rRuta.textContent = o + ' → ' + dst + ' · ' + fmt(d, 0) + ' km';
-    rNota.textContent = 'Consumo ' + fmt(c, 1) + ' L/100 km · Gasóleo a ' + fmt(p, 3) + ' €/L';
-
-    if (d <= 0 || c <= 0 || p <= 0) {
+    if (!result.valid) {
+      rRuta.textContent = o + ' → ' + dst;
       rCoste.textContent = '—';
       rLitros.textContent = '—';
       rCoste100.textContent = '—';
+      rRango.textContent = 'Rango probable: —';
+      rExplanation.textContent = 'Revisa distancia, consumo base y precio en Ajustar cálculo.';
+      rNota.textContent = 'Faltan datos para completar la estimación.';
       return;
     }
-    var liters = Math.round(d * c / 100 * 100) / 100;
-    var cost = Math.round(liters * p * 100) / 100;
-    var per100 = Math.round(c * p * 100) / 100;
-    rLitros.textContent = fmt(liters, 2) + ' L';
-    rCoste.textContent = fmt(cost, 2) + ' €';
-    rCoste100.textContent = fmt(per100, 2) + ' €';
-  }
 
-  ['input', 'change'].forEach(function (ev) {
-    [origen, destino, dist, cons, price].forEach(function (el) {
-      el.addEventListener(ev, calc);
-    });
-  });
+    rRuta.textContent = o + ' → ' + dst + ' · ' + fmt(MiMotorCalculator.parseNumber(dist.value), 0) + ' km';
+    rCoste.textContent = fmt(result.cost, 2) + ' €';
+    rLitros.textContent = fmt(result.liters, 2) + ' L';
+    rCoste100.textContent = fmt(result.costPer100, 2) + ' €';
+    rRango.textContent = 'Rango probable: ' + fmt(result.rangeMin, 2) + ' € – ' + fmt(result.rangeMax, 2) + ' €';
+    rExplanation.textContent = car + ': base ' + fmt(MiMotorCalculator.parseNumber(cons.value), 1) + ' L/100 km, ajuste ' + driving.options[driving.selectedIndex].text.toLowerCase() + ', precio ' + fmt(MiMotorCalculator.parseNumber(price.value), 3) + ' €/L.';
+    rNota.textContent = 'Estimación local · el routing y el precio real se conectarán mediante backend.';
+  }
 
   document.getElementById('btn-calc').addEventListener('click', function () {
     calc();
