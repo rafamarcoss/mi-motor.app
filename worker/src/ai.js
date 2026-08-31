@@ -15,7 +15,7 @@ export class MockAIProvider {
 }
 
 export class DeepSeekProvider {
-  constructor({ apiKey, model = 'deepseek-chat', fetchImpl = fetch, timeoutMs = 10000 } = {}) {
+  constructor({ apiKey, model = 'deepseek-v4-flash', fetchImpl = fetch, timeoutMs = 10000 } = {}) {
     this.apiKey = apiKey;
     this.model = model;
     this.fetchImpl = fetchImpl;
@@ -35,6 +35,7 @@ export class DeepSeekProvider {
           model: this.model,
           temperature: 0,
           max_tokens: 220,
+          response_format: { type: 'json_object' },
           messages: [
             { role: 'system', content: 'Devuelve únicamente JSON válido con make, model, generation, year, engine, fuel, powerCv, powerKw, referenceConsumption y confidence. Si hay ambigüedad, usa null en los campos inciertos y confidence bajo. No inventes fuentes ni datos.' },
             { role: 'user', content: `Normaliza este vehículo: ${input}` }

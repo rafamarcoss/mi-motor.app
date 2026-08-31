@@ -87,6 +87,7 @@ test('DeepSeek recibe un prompt cerrado y devuelve JSON normalizable', async () 
   const result = await provider.normalizeVehicle('Opel Astra H 2010 1.9 120 CV');
   assert.equal(result.make, 'Opel');
   assert.equal(requestBody.temperature, 0);
+  assert.deepEqual(requestBody.response_format, { type: 'json_object' });
   assert.equal(requestBody.messages[1].content.includes('Opel Astra'), true);
   assert.equal(requestBody.messages[1].content.includes('prompt'), false);
 });

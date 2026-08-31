@@ -23,6 +23,7 @@
 - **Routing inicial:** [openrouteservice v2](https://openrouteservice.org/dev/), usando geocoding y `directions/driving-car` desde backend. Su [tabla de restricciones](https://openrouteservice.org/restrictions/) obliga a controlar cuota, distancia y waypoints; por eso no se llamará desde cada cambio de campo.
 - **Alternativa de routing:** [Mapbox Directions v5](https://docs.mapbox.com/api/navigation/directions/) queda como adapter sustituible. Requiere token y su coste depende de peticiones, así que no se activa en el MVP.
 - **Carburantes:** el [dataset oficial de precios de carburantes](https://datos.gob.es/es/catalogo/e05068001-precio-de-carburantes-en-las-gasolineras-espanolas) del Ministerio expone un servicio REST y descargas. El backend agregará por provincia/municipio y cacheará el resultado con fecha y fuente.
+- **IA auxiliar:** [DeepSeek Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/) con `deepseek-v4-flash`, temperatura 0 y JSON Output; una llamada como máximo por vehículo no cacheado.
 
 ## Decisiones
 

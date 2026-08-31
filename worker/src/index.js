@@ -112,7 +112,7 @@ function createProviders(env) {
       : new UnavailableRoutingProvider(),
     fuel: new MitecoFuelPriceProvider(),
     ai: env.DEEPSEEK_API_KEY
-      ? new DeepSeekProvider({ apiKey: env.DEEPSEEK_API_KEY, model: env.DEEPSEEK_MODEL || 'deepseek-chat' })
+      ? new DeepSeekProvider({ apiKey: env.DEEPSEEK_API_KEY, model: env.DEEPSEEK_MODEL || 'deepseek-v4-flash' })
       : new UnavailableAIProvider()
   };
 }
