@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculateConsumption, calculateCost } from '../src/consumption.js';
 import { DeepSeekProvider } from '../src/ai.js';
-import { MitecoFuelPriceProvider, fuelStatistics, parseFuelPrice } from '../src/fuel.js';
+import { fuelTypeForVehicle, MitecoFuelPriceProvider, fuelStatistics, parseFuelPrice } from '../src/fuel.js';
 import { OpenRouteServiceProvider } from '../src/routing.js';
 
 test('aplica factores avanzados sin duplicar el modo de conducción', () => {
@@ -51,6 +51,13 @@ test('rechaza combustibles no soportados sin consultar la API', async () => {
   const provider = new MitecoFuelPriceProvider({ fetchImpl: async () => { calls += 1; return new Response('{}'); } });
   await assert.rejects(() => provider.average('Córdoba', 'kerosene'), (error) => error.code === 'FUEL_TYPE_UNSUPPORTED' && error.status === 422);
   assert.equal(calls, 0);
+});
+
+test('mapea combustible de vehículo sin convertir eléctrico en diésel', () => {
+  assert.equal(fuelTypeForVehicle('diesel'), 'diesel');
+  assert.equal(fuelTypeForVehicle('gasoline'), 'gasoline');
+  assert.equal(fuelTypeForVehicle('hybrid'), 'gasoline');
+  assert.throws(() => fuelTypeForVehicle('electric'), (error) => error.code === 'FUEL_TYPE_UNSUPPORTED' && error.status === 422);
 });
 
 test('rechaza un municipio inexistente', async () => {

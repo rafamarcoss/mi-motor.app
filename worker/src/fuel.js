@@ -6,6 +6,12 @@ export const FUEL_FIELDS = Object.freeze({
   gasoline: 'Precio Gasolina 95 E5'
 });
 
+export function fuelTypeForVehicle(fuel) {
+  if (fuel === 'diesel') return 'diesel';
+  if (fuel === 'gasoline' || fuel === 'hybrid') return 'gasoline';
+  throw new ProviderError('FUEL_TYPE_UNSUPPORTED', 'No hay un carburante líquido aplicable para ese vehículo.', 422);
+}
+
 export function parseFuelPrice(value) {
   if (value === null || value === undefined) return null;
   const raw = String(value).trim();

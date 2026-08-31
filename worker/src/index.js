@@ -4,7 +4,7 @@ import { createStore, MemoryStore } from './store.js';
 import { AiRateLimiter } from './rate-limit.js';
 import { validateTripPayload } from './validation.js';
 import { validateVehicle, resolveKnownVehicle } from './vehicle.js';
-import { MitecoFuelPriceProvider } from './fuel.js';
+import { fuelTypeForVehicle, MitecoFuelPriceProvider } from './fuel.js';
 import { OpenRouteServiceProvider, UnavailableRoutingProvider, routeCacheKey } from './routing.js';
 
 const CACHE_TTL = Object.freeze({ route: 3600, fuel: 1800, vehicle: 30 * 24 * 3600 });
@@ -54,7 +54,8 @@ export async function buildTrip(payload, { env = {}, request = new Request('http
 
   const vehicleResult = await resolveVehicle(input.vehicle, { env, request, store, persistentStore, providers });
   const route = await getOrFetch(store, routeCacheKey(input.origin, input.destination), CACHE_TTL.route, () => providers.routing.route(input.origin, input.destination));
-  const fuel = await getFuel(store, `fuel:${vehicleResult.fuel}:${input.origin.toLowerCase()}`, providers.fuel, vehicleResult.fuel === 'gasoline' ? 'gasoline' : 'diesel', input.origin);
+  const fuelType = fuelTypeForVehicle(vehicleResult.fuel);
+  const fuel = await getFuel(store, `fuel:${fuelType}:${input.origin.toLowerCase()}`, providers.fuel, fuelType, input.origin);
   if (!fuel || !Number.isFinite(fuel.averagePrice) || fuel.averagePrice <= 0) {
     throw new ApiError('FUEL_UNAVAILABLE', 'No hay un precio medio verificable para esa zona.', 502);
   }
