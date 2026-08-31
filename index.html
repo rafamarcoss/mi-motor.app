@@ -66,7 +66,7 @@
   .header-inner { display: flex; align-items: center; gap: 28px; height: 54px; }
   .brand { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
   .brand-mark { width: 11px; height: 11px; border-radius: 2px; background: var(--accent); border: 1px solid #a9d400; }
-  .main-nav { display: flex; gap: 20px; }
+  .main-nav { display: flex; gap: 20px; min-width: 0; }
   .main-nav a { font-size: 13px; font-weight: 500; color: var(--muted); padding: 6px 0; }
   .main-nav a:hover { color: var(--text); }
   .header-cta { margin-left: auto; }
@@ -245,10 +245,10 @@
     .footer-grid { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 860px) {
-    .header-inner { flex-wrap: wrap; height: auto; padding: 10px 0 0; row-gap: 0; }
-    .main-nav { order: 3; width: 100%; overflow-x: auto; gap: 18px; padding: 8px 0 10px; border-top: 1px solid var(--border); margin-top: 8px; }
+    .header-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; height: auto; padding: 10px 0 0; row-gap: 0; }
+    .main-nav { grid-column: 1 / -1; width: 100%; overflow-x: auto; gap: 18px; padding: 8px 0 10px; border-top: 1px solid var(--border); margin-top: 8px; }
     .main-nav a { white-space: nowrap; }
-    .header-cta { margin-left: auto; }
+    .header-cta { margin-left: 0; }
     .car-panel { grid-template-columns: 1fr; }
     .car-id { border-right: 0; border-bottom: 1px solid var(--border); }
     .car-stats { grid-template-columns: 1fr; }
@@ -582,7 +582,6 @@
     }
   });
 
-  calc();
 })();
 </script>
 </body>
