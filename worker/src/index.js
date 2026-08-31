@@ -3,7 +3,7 @@ import { DeepSeekProvider, UnavailableAIProvider } from './ai.js';
 import { createStore, MemoryStore } from './store.js';
 import { AiRateLimiter } from './rate-limit.js';
 import { validateTripPayload } from './validation.js';
-import { validateVehicle, resolveKnownVehicle, vehicleId } from './vehicle.js';
+import { validateVehicle, resolveKnownVehicle } from './vehicle.js';
 import { MitecoFuelPriceProvider } from './fuel.js';
 import { OpenRouteServiceProvider, UnavailableRoutingProvider, routeCacheKey } from './routing.js';
 
@@ -42,7 +42,7 @@ export default {
       const status = Number.isInteger(error.status) ? error.status : 500;
       const code = error.code || 'TRIP_ERROR';
       const message = status >= 500 && !error.code ? 'No se pudo completar el cálculo.' : error.message;
-      return json({ error: { code, message } }, status, cors);
+      return json({ error: { code, message }, ...(error.details || {}) }, status, cors);
     }
   }
 };
@@ -79,10 +79,7 @@ export async function buildTrip(payload, { env = {}, request = new Request('http
 
 async function resolveVehicle(input, { env, request, store, persistentStore, providers }) {
   const known = resolveKnownVehicle(input);
-  if (known) {
-    await store.put(`vehicle:${known.vehicleId}`, known, CACHE_TTL.vehicle);
-    return known;
-  }
+  if (known) return known;
 
   const inputKey = `vehicle-input:${input.toLowerCase().replace(/\s+/g, '-')}`;
   const cached = await store.get(inputKey);
@@ -93,7 +90,12 @@ async function resolveVehicle(input, { env, request, store, persistentStore, pro
   const rateLimiter = new AiRateLimiter({ store, secret: env.RATE_LIMIT_SECRET });
   const quota = await rateLimiter.consume(request);
   if (!quota.configured) throw new ApiError('AI_RATE_LIMIT_NOT_CONFIGURED', 'El límite IA no está configurado en el backend.', 503);
-  if (!quota.allowed) throw new ApiError('AI_RATE_LIMITED', 'Has alcanzado los 3 cálculos IA de las últimas 24 horas.', 429);
+  if (!quota.allowed) {
+    throw new ApiError('AI_RATE_LIMITED', 'Has alcanzado los 3 cálculos IA de las últimas 24 horas.', 429, {
+      remainingAiCalculations: 0,
+      retryAfter: Math.max(1, Math.ceil((quota.resetAt - Date.now()) / 1000))
+    });
+  }
 
   const resolved = validateVehicle(await providers.ai.normalizeVehicle(input));
   if (!resolved || (resolved.confidence !== undefined && Number(resolved.confidence) < 0.55)) {
@@ -101,7 +103,6 @@ async function resolveVehicle(input, { env, request, store, persistentStore, pro
   }
   const result = { ...resolved, source: resolved.source || 'deepseek', cached: false };
   await store.put(inputKey, result, CACHE_TTL.vehicle);
-  await store.put(`vehicle:${vehicleId(result)}`, result, CACHE_TTL.vehicle);
   return result;
 }
 
@@ -165,9 +166,10 @@ function json(body, status, headers = {}) {
 }
 
 class ApiError extends Error {
-  constructor(code, message, status) {
+  constructor(code, message, status, details = {}) {
     super(message);
     this.code = code;
     this.status = status;
+    this.details = details;
   }
 }

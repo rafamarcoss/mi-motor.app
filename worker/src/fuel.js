@@ -1,6 +1,32 @@
 import { normaliseText } from './validation.js';
 
 export const MITECO_URL = 'https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/';
+export const FUEL_FIELDS = Object.freeze({
+  diesel: 'Precio Gasoleo A',
+  gasoline: 'Precio Gasolina 95 E5'
+});
+
+export function parseFuelPrice(value) {
+  if (value === null || value === undefined) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const parsed = Number(raw.replace(',', '.'));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export function fuelStatistics(values) {
+  const prices = values.map(parseFuelPrice).filter((price) => price !== null).sort((a, b) => a - b);
+  if (prices.length === 0) return null;
+  const middle = Math.floor(prices.length / 2);
+  const median = prices.length % 2 ? prices[middle] : (prices[middle - 1] + prices[middle]) / 2;
+  return {
+    samples: prices.length,
+    min: round(prices[0], 3),
+    max: round(prices[prices.length - 1], 3),
+    mean: round(prices.reduce((sum, price) => sum + price, 0) / prices.length, 3),
+    median: round(median, 3)
+  };
+}
 
 export class MockFuelPriceProvider {
   constructor(price = 1.5) {
@@ -29,25 +55,28 @@ export class MitecoFuelPriceProvider {
   }
 
   async average(zone, fuel) {
+    const field = FUEL_FIELDS[fuel];
+    if (!field) throw new ProviderError('FUEL_TYPE_UNSUPPORTED', 'Combustible no soportado.', 422);
     const dataset = await this.dataset();
     const rows = Array.isArray(dataset?.ListaEESSPrecio) ? dataset.ListaEESSPrecio : [];
-    const field = fuel === 'gasoline' ? 'Precio Gasolina 95 E5' : 'Precio Gasoleo A';
     const target = normaliseText(zone);
-    const municipalityRows = this.rowsFor(rows, 'Municipio', target, field);
-    const province = municipalityRows[0]?.Provincia || zone;
+    const municipalityMatches = rows.filter((row) => normaliseText(row.Municipio) === target);
+    const municipalityRows = municipalityMatches.filter((row) => parseFuelPrice(row[field]) !== null);
+    const province = municipalityMatches[0]?.Provincia || zone;
     const provinceRows = this.rowsFor(rows, 'Provincia', normaliseText(province), field);
     const selected = municipalityRows.length >= 3 ? municipalityRows : provinceRows;
     if (selected.length === 0) {
       throw new ProviderError('FUEL_ZONE_NOT_FOUND', `No hay precios disponibles para "${zone}".`, 422);
     }
-    const prices = selected.map((row) => Number(String(row[field]).replace(',', '.'))).filter((price) => Number.isFinite(price) && price > 0);
-    if (prices.length === 0) throw new ProviderError('FUEL_PRICE_NOT_FOUND', 'La fuente no tiene un precio válido para esa zona.', 502);
+    const statistics = fuelStatistics(selected.map((row) => row[field]));
+    if (!statistics) throw new ProviderError('FUEL_PRICE_NOT_FOUND', 'La fuente no tiene un precio válido para esa zona.', 502);
     return {
       type: fuel,
-      averagePrice: round(prices.reduce((sum, price) => sum + price, 0) / prices.length, 3),
+      averagePrice: statistics.mean,
       area: selected[0][municipalityRows.length >= 3 ? 'Municipio' : 'Provincia'],
       areaType: municipalityRows.length >= 3 ? 'municipality' : 'province',
-      sampleSize: prices.length,
+      sampleSize: statistics.samples,
+      statistics,
       source: MITECO_URL,
       updatedAt: dataset.Fecha || null,
       fallback: false
@@ -55,7 +84,7 @@ export class MitecoFuelPriceProvider {
   }
 
   rowsFor(rows, field, target, priceField) {
-    return rows.filter((row) => normaliseText(row[field]) === target && row[priceField]);
+    return rows.filter((row) => normaliseText(row[field]) === target && parseFuelPrice(row[priceField]) !== null);
   }
 
   async dataset() {

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculateConsumption, calculateCost } from '../src/consumption.js';
 import { DeepSeekProvider } from '../src/ai.js';
-import { MitecoFuelPriceProvider } from '../src/fuel.js';
+import { MitecoFuelPriceProvider, fuelStatistics, parseFuelPrice } from '../src/fuel.js';
 import { OpenRouteServiceProvider } from '../src/routing.js';
 
 test('aplica factores avanzados sin duplicar el modo de conducción', () => {
@@ -14,6 +14,16 @@ test('aplica factores avanzados sin duplicar el modo de conducción', () => {
   assert.equal(consumption.base, 6);
   assert.equal(consumption.adjusted, 7.86);
   assert.equal(calculateCost({ distanceKm: 100, consumption, fuelPrice: 1.5 }).estimated, 11.79);
+});
+
+test('parsea precios españoles y descarta vacíos, cero y NaN', () => {
+  assert.equal(parseFuelPrice('1,459'), 1.459);
+  assert.equal(parseFuelPrice(''), null);
+  assert.equal(parseFuelPrice('0'), null);
+  assert.equal(parseFuelPrice('NaN'), null);
+  assert.deepEqual(fuelStatistics(['1,459', '1,500', '1,601']), {
+    samples: 3, min: 1.459, max: 1.601, mean: 1.52, median: 1.5
+  });
 });
 
 test('calcula media municipal del dataset oficial de carburantes', async () => {
@@ -33,6 +43,26 @@ test('calcula media municipal del dataset oficial de carburantes', async () => {
   assert.equal(result.areaType, 'municipality');
   assert.equal(result.sampleSize, 3);
   assert.equal(result.fallback, false);
+  assert.deepEqual(result.statistics, { samples: 3, min: 1.48, max: 1.5, mean: 1.49, median: 1.49 });
+});
+
+test('rechaza combustibles no soportados sin consultar la API', async () => {
+  let calls = 0;
+  const provider = new MitecoFuelPriceProvider({ fetchImpl: async () => { calls += 1; return new Response('{}'); } });
+  await assert.rejects(() => provider.average('Córdoba', 'kerosene'), (error) => error.code === 'FUEL_TYPE_UNSUPPORTED' && error.status === 422);
+  assert.equal(calls, 0);
+});
+
+test('rechaza un municipio inexistente', async () => {
+  const provider = new MitecoFuelPriceProvider({
+    fetchImpl: async () => new Response(JSON.stringify({ ListaEESSPrecio: [] }))
+  });
+  await assert.rejects(() => provider.average('Atlantis', 'diesel'), (error) => error.code === 'FUEL_ZONE_NOT_FOUND' && error.status === 422);
+});
+
+test('clasifica una caída de la API MITECO', async () => {
+  const provider = new MitecoFuelPriceProvider({ fetchImpl: async () => { throw new Error('offline'); } });
+  await assert.rejects(() => provider.average('Córdoba', 'diesel'), (error) => error.code === 'FUEL_NETWORK_ERROR' && error.status === 502);
 });
 
 test('usa provincia cuando el municipio tiene poca muestra', async () => {
@@ -51,6 +81,7 @@ test('usa provincia cuando el municipio tiene poca muestra', async () => {
   assert.equal(result.areaType, 'province');
   assert.equal(result.sampleSize, 3);
   assert.equal(result.area, 'CÓRDOBA');
+  assert.equal(result.statistics.median, 1.6);
 });
 
 test('openrouteservice geocodifica y calcula la ruta en dos peticiones', async () => {
@@ -91,4 +122,27 @@ test('DeepSeek recibe un prompt cerrado y devuelve JSON normalizable', async () 
   assert.deepEqual(requestBody.response_format, { type: 'json_object' });
   assert.equal(requestBody.messages[1].content.includes('Opel Astra'), true);
   assert.equal(requestBody.messages[1].content.includes('prompt'), false);
+});
+
+test('DeepSeek clasifica JSON malformado como respuesta inválida', async () => {
+  const provider = new DeepSeekProvider({
+    apiKey: 'test-key',
+    fetchImpl: async () => new Response(JSON.stringify({ choices: [{ message: { content: '{not-json' } }] }))
+  });
+  await assert.rejects(() => provider.normalizeVehicle('texto con <script>alert(1)</script>'), (error) => error.code === 'AI_INVALID_RESPONSE' && error.status === 502);
+});
+
+test('OpenRouteService clasifica timeout', async () => {
+  const provider = new OpenRouteServiceProvider({
+    apiKey: 'test-key',
+    fetchImpl: async () => { throw new DOMException('timeout', 'AbortError'); }
+  });
+  await assert.rejects(() => provider.route('Córdoba, España', 'Chipiona, Cádiz, España'), (error) => error.code === 'ROUTING_TIMEOUT' && error.status === 504);
+});
+
+test('MITECO clasifica timeout', async () => {
+  const provider = new MitecoFuelPriceProvider({
+    fetchImpl: async () => { throw new DOMException('timeout', 'AbortError'); }
+  });
+  await assert.rejects(() => provider.average('Córdoba', 'diesel'), (error) => error.code === 'FUEL_TIMEOUT' && error.status === 504);
 });

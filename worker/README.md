@@ -8,9 +8,10 @@ Desde `worker/`:
 
 ```sh
 npm test
+npm run sanity:miteco -- Córdoba diesel
 ```
 
-El test usa providers mock y no llama a servicios externos.
+El test usa providers mock y no llama a servicios externos. El comando de sanity consulta el REST MITECO y muestra min, max, media, mediana, valores inválidos y duplicados de la zona indicada.
 
 ## Cloudflare
 

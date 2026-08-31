@@ -10,10 +10,10 @@ Estos contratos se sirven bajo `/api/` desde un runtime serverless. El frontend 
 {"vehicle":"Opel Astra H GTC 2010 1.9 CDTI 120 CV","origin":"Córdoba","destination":"Chipiona","drivingMode":"normal","advanced":{}}
 ```
 
-La respuesta compone la ficha del vehículo, la ruta, el precio de combustible, el consumo ajustado, el coste y el uso de IA:
+La respuesta compone la ficha del vehículo, la ruta, el precio de combustible, el consumo ajustado, el coste y el uso de IA. Los valores del ejemplo son una lectura puntual del dataset MITECO y cambian con cada actualización:
 
 ```json
-{"route":{"origin":"Córdoba","destination":"Chipiona","distanceKm":245,"durationMinutes":155,"provider":"openrouteservice"},"vehicle":{"make":"Opel","model":"Astra","generation":"H GTC","year":2010,"engine":"1.9 CDTI","fuel":"diesel","powerCv":120,"powerKw":88,"referenceConsumption":6.1,"confidence":0.96,"source":"local-catalog","vehicleId":"opel-astra-h-gtc-2010-1-9-cdti-120"},"consumption":{"base":6.1,"adjusted":6.1,"min":5.61,"max":6.59,"factors":{"driving":1,"climate":1,"load":1,"traffic":1}},"fuel":{"type":"diesel","averagePrice":1.906,"area":"Córdoba","areaType":"municipality","sampleSize":58,"source":"https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/","updatedAt":"31/08/2026 18:23:26","fallback":false},"cost":{"liters":14.95,"estimated":28.49,"min":26.2,"max":30.77,"per100Km":11.63},"usage":{"remainingAiCalculations":null}}
+{"route":{"origin":"Córdoba","destination":"Chipiona","distanceKm":245,"durationMinutes":155,"provider":"openrouteservice"},"vehicle":{"make":"Opel","model":"Astra","generation":"H GTC","year":2010,"engine":"1.9 CDTI","fuel":"diesel","powerCv":120,"powerKw":88,"referenceConsumption":6.1,"confidence":0.96,"source":"local-catalog","vehicleId":"opel-astra-h-gtc-2010-1-9-cdti-120"},"consumption":{"base":6.1,"adjusted":6.1,"min":5.61,"max":6.59,"factors":{"driving":1,"climate":1,"load":1,"traffic":1}},"fuel":{"type":"diesel","averagePrice":1.907,"area":"Córdoba","areaType":"municipality","sampleSize":58,"statistics":{"samples":58,"min":1.779,"max":1.999,"mean":1.907,"median":1.949},"source":"https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/","updatedAt":"31/08/2026 19:21:33","fallback":false},"cost":{"liters":14.95,"estimated":28.5,"min":26.2,"max":30.78,"per100Km":11.64},"usage":{"remainingAiCalculations":null}}
 ```
 
 El Worker geocodifica, valida el país, limita longitud y cachea por origen/destino normalizados. El cliente no llama a proveedores externos.
@@ -48,3 +48,5 @@ Si la fuente falla y existe un dato de hasta 7 días, se devuelve con `fallback:
 La respuesta valida `make`, `model`, `year`, `engine`, `fuel`, `powerCv`, `powerKw` y `referenceConsumption`; `confidence` permite rechazar ambigüedades. La ficha conserva `source` y `vehicleId`; IA es fallback, no fuente de verdad.
 
 El gateway aplica el límite de 3 cálculos IA/24 h antes de llamar al proveedor. La clave y cualquier identificador de rate limit quedan en backend; no se envían al LLM.
+
+Cuando se agota la cuota, responde `429` con `remainingAiCalculations: 0` y `retryAfter` en segundos. Un vehículo ya cacheado no consume cuota.
