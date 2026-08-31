@@ -90,7 +90,7 @@ test('openrouteservice geocodifica y calcula la ruta en dos peticiones', async (
     apiKey: 'test-key',
     fetchImpl: async (url, options = {}) => {
       calls.push({ url, options });
-      if (url.includes('/geocode/search')) {
+      if (url.includes('/pelias/v1/search')) {
         return new Response(JSON.stringify({ features: [{ geometry: { coordinates: url.includes('C%C3%B3rdoba') ? [-4.78, 37.88] : [-6.43, 36.74] } }] }));
       }
       return new Response(JSON.stringify({ routes: [{ summary: { distance: 245000, duration: 9300 } }] }));
@@ -101,6 +101,8 @@ test('openrouteservice geocodifica y calcula la ruta en dos peticiones', async (
   assert.equal(result.durationMinutes, 155);
   assert.equal(result.provider, 'openrouteservice');
   assert.equal(calls.length, 3);
+  assert.equal(calls[0].url.startsWith('https://api.heigit.org/pelias/v1/search'), true);
+  assert.equal(calls[2].url.startsWith('https://api.heigit.org/openrouteservice/v2/directions/driving-car/json'), true);
   assert.equal(calls[0].url.includes('test-key'), false);
   assert.equal(calls[0].options.headers.Authorization, 'test-key');
   assert.equal(calls[2].options.method, 'POST');

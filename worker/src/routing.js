@@ -1,6 +1,6 @@
 import { normaliseText } from './validation.js';
 
-const ORS_URL = 'https://api.openrouteservice.org';
+const ORS_URL = 'https://api.heigit.org';
 
 export class UnavailableRoutingProvider {
   async route() {
@@ -51,7 +51,7 @@ export class OpenRouteServiceProvider {
   }
 
   async geocode(query) {
-    const url = `${ORS_URL}/geocode/search?text=${encodeURIComponent(query)}&size=1&boundary.country=ES`;
+    const url = `${ORS_URL}/pelias/v1/search?text=${encodeURIComponent(query)}&size=1&boundary.country=ES`;
     const response = await this.request(url, { headers: { Authorization: this.apiKey, Accept: 'application/json' } });
     const coordinates = response?.features?.[0]?.geometry?.coordinates;
     if (!Array.isArray(coordinates) || coordinates.length < 2) {
