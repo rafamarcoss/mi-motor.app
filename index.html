@@ -590,7 +590,10 @@
     rCoste100.textContent = fmt(cost.per100Km, 2) + ' €';
     rRango.textContent = 'Rango probable: ' + fmt(cost.min, 2) + ' € – ' + fmt(cost.max, 2) + ' €';
     rExplanation.textContent = (car.make + ' ' + car.model) + ': base ' + fmt(consumption.base, 1) + ' L/100 km, ajuste ' + driving.options[driving.selectedIndex].text.toLowerCase() + ', precio medio ' + fmt(fuel.averagePrice, 3) + ' €/L en ' + fuel.area + '.';
-    rNota.textContent = 'Fuente carburante: ' + fuel.source + (fuel.fallback ? ' · último dato disponible' : '');
+    var routeSource = route.provider === 'openrouteservice' ? 'OpenRouteService' : route.provider;
+    var fuelSource = fuel.source && fuel.source.indexOf('minetur.gob.es') >= 0 ? 'MITECO' : fuel.source;
+    var vehicleSource = car.source === 'local-catalog' ? 'Catálogo MiMotor' : (car.source === 'deepseek' ? 'Resolución IA' : car.source);
+    rNota.textContent = 'Datos del cálculo · Ruta: ' + routeSource + ' · Combustible: ' + fuelSource + ' · Vehículo: ' + vehicleSource + ' · Consumo: MiMotor' + (fuel.fallback ? ' · último dato disponible' : '');
   }
 
   function renderError(error) {
