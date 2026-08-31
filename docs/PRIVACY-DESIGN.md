@@ -12,7 +12,7 @@ No hay login, cuentas, cookies de marketing, perfiles, matrículas ni envío de 
 
 ## Límite de IA
 
-El objetivo es limitar a 3 cálculos por 24 horas. El rate limiting debe separarse de analytics, usar TTL corto y evitar almacenar IP en claro cuando el proveedor lo permita (por ejemplo, un identificador efímero derivado y rotado). La IP nunca se envía al LLM.
+El Worker limita a 3 cálculos IA por 24 horas. Para ello calcula un HMAC-SHA-256 de la IP recibida por Cloudflare, guarda solo ese identificador durante 24 horas y no almacena la IP en claro. La IP nunca se envía al LLM.
 
 ## Feedback futuro
 
