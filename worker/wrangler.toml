@@ -1,0 +1,11 @@
+name = "mimotor-api"
+main = "src/index.js"
+compatibility_date = "2026-08-31"
+
+[vars]
+ALLOWED_ORIGIN = "https://mi-motor.app"
+
+# Create this namespace once, then uncomment and fill its id.
+# [[kv_namespaces]]
+# binding = "MIMOTOR_KV"
+# id = "<cloudflare-kv-namespace-id>"

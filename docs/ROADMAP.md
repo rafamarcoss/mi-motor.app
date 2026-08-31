@@ -21,7 +21,8 @@
 
 ## P3+: backend y contenido
 
-- [ ] Gateway serverless seguro y provider abstraction para IA.
-- [ ] Rate limiting minimizado y cache.
+- [x] Gateway serverless seguro y provider abstraction para IA (Worker preparado).
+- [x] Rate limiting minimizado y cache (KV/Cache API preparados).
+- [ ] Desplegar Worker y conectar frontend cuando existan secretos Cloudflare/ORS/DeepSeek.
 - [ ] Plantilla `/articulos/` y contenido revisado.
 - [ ] Páginas por vehículo solo cuando exista información útil.
