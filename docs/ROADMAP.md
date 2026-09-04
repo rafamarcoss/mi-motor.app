@@ -17,7 +17,9 @@
 - [x] Cálculo de consumo ajustado y casos reproducibles.
 - [x] Adapter de routing y geocoding (openrouteservice, mock probado; clave pendiente).
 - [x] Adapter de precios medios oficiales de carburantes (REST oficial probado).
-- [ ] Ficha normalizada de vehículos con fuente y fecha.
+- [x] Ficha normalizada de vehículos con fuente y fecha.
+- [x] Perfil estructurado "Tu coche" en el navegador (lista blanca, sanitización y fallback con JSON corrupto).
+- [x] Personalización del cálculo: consumo manual, ida/vuelta, pasajeros, peajes, parking, otros, clima, carga y tráfico.
 
 ## P3+: backend y contenido
 

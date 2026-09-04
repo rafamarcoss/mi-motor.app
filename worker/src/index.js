@@ -65,7 +65,13 @@ export async function buildTrip(payload, { env = {}, request = new Request('http
     drivingMode: input.drivingMode,
     advanced: input.advanced
   });
-  const cost = calculateCost({ distanceKm: route.distanceKm, consumption, fuelPrice: fuel.averagePrice });
+  const usedPrice = Number.isFinite(input.advanced?.fuelPrice) ? input.advanced.fuelPrice : fuel.averagePrice;
+  const cost = calculateCost({
+    distanceKm: route.distanceKm,
+    consumption,
+    fuelPrice: usedPrice,
+    advanced: input.advanced
+  });
   const rateLimiter = new AiRateLimiter({ store, secret: env.RATE_LIMIT_SECRET });
 
   return {
@@ -73,6 +79,7 @@ export async function buildTrip(payload, { env = {}, request = new Request('http
     vehicle: vehicleResult,
     consumption,
     fuel,
+    price: { used: usedPrice, source: Number.isFinite(input.advanced?.fuelPrice) ? 'manual' : fuel.source },
     cost,
     usage: { remainingAiCalculations: await rateLimiter.remaining(request) }
   };

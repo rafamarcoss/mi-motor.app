@@ -25,6 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="js/vehicle-profile.js"></script>
 <script src="js/calculator-core.js"></script>
 <script src="js/trip-api.js"></script>
 <style>
@@ -118,6 +119,7 @@
   .field.span3 { grid-column: span 3; }
   .field.span2 { grid-column: span 2; }
   .field label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+  .field label .light { font-weight: 400; color: #a6a8a1; }
   .field input {
     width: 100%; height: 38px; padding: 0 11px;
     border: 1px solid var(--border); border-radius: 6px;
@@ -140,6 +142,13 @@
   .advanced-fields[open] summary { margin-bottom: 12px; color: var(--text); }
   .advanced-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 14px; }
 
+  .vehicle-editor { grid-column: span 6; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
+  .vehicle-editor summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .vehicle-editor summary::marker { color: var(--text); }
+  .vehicle-editor[open] summary { margin-bottom: 12px; color: var(--text); }
+  .editor-note { grid-column: span 6; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .editor-actions { grid-column: span 6; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+
   .calc-actions { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
   .calc-actions .note { font-size: 12.5px; color: var(--muted); }
 
@@ -155,15 +164,20 @@
     border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 3px 8px;
   }
   .res-route { margin-top: 12px; font-size: 13.5px; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums; }
-  .res-main { margin-top: 18px; }
+  .res-line { margin-top: 4px; font-size: 12.5px; color: rgba(255,255,255,0.7); }
+  .res-main { margin-top: 16px; }
   .res-main .k { font-size: 12.5px; color: rgba(255,255,255,0.6); }
   .res-main .v { margin-top: 2px; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.05; }
-  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.14); }
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.14); }
   .res-grid .k { font-size: 12px; color: rgba(255,255,255,0.55); }
   .res-grid .v { margin-top: 3px; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .res-note { margin-top: auto; padding-top: 16px; font-size: 11.5px; color: rgba(255,255,255,0.45); }
-  .res-range { margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.78); }
-  .res-explanation { margin-top: 10px; font-size: 11.5px; line-height: 1.45; color: rgba(255,255,255,0.52); }
+  .res-range { margin-top: 14px; font-size: 13px; color: rgba(255,255,255,0.78); }
+  .res-detail { display: grid; gap: 5px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 12.5px; color: rgba(255,255,255,0.72); }
+  .res-detail .row { display: flex; justify-content: space-between; gap: 12px; }
+  .res-detail b { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .res-explanation { margin-top: 12px; font-size: 11.5px; line-height: 1.5; color: rgba(255,255,255,0.52); }
+  .res-explanation .up { display: inline-block; margin-right: 6px; }
+  .res-note { margin-top: auto; padding-top: 12px; font-size: 11.5px; color: rgba(255,255,255,0.45); }
 
   /* ---------- secciones ---------- */
   .section { border-top: 1px solid var(--border); padding: 38px 0 42px; scroll-margin-top: 70px; }
@@ -286,7 +300,7 @@
       <a href="#averias">Averías</a>
       <a href="#guias">Guías</a>
     </nav>
-    <a class="btn btn-dark header-cta" href="#mi-coche">Guardar mi coche</a>
+    <a class="btn btn-dark header-cta" href="#editor-coche">Guardar mi coche</a>
   </div>
 </header>
 
@@ -301,81 +315,90 @@
         <div class="calc-form">
           <div class="calc-top">
             <span class="calc-label">Calculadora de viaje</span>
-            <span class="car-chip">
-              <strong>Opel Astra H GTC</strong><span class="sep">·</span>1.9 CDTI · 2010<span class="sep">·</span>Diésel
-              <a class="change" href="#mi-coche">Cambiar</a>
+            <span class="car-chip" id="chip-vehiculo">
+              <strong>Opel Astra H GTC</strong><span class="sep">·</span>1.9 CDTI 120 CV · 2010<span class="sep">·</span>Diésel
+              <a class="change" href="#editor-coche">Cambiar</a>
             </span>
           </div>
 
+          <details class="vehicle-editor" id="editor-coche">
+            <summary>Tu coche</summary>
+            <div class="advanced-grid">
+              <div class="field span2"><label for="f-marca">Marca</label><input type="text" id="f-marca" value="Opel" maxlength="48"></div>
+              <div class="field span2"><label for="f-modelo">Modelo</label><input type="text" id="f-modelo" value="Astra" maxlength="48"></div>
+              <div class="field span2"><label for="f-generacion">Generación <span class="light">(opcional)</span></label><input type="text" id="f-generacion" value="H GTC" maxlength="48"></div>
+              <div class="field span2"><label for="f-anio">Año</label><input type="text" inputmode="numeric" id="f-anio" value="2010"></div>
+              <div class="field span2"><label for="f-motor">Motor</label><input type="text" id="f-motor" value="1.9 CDTI 120 CV" maxlength="48"></div>
+              <div class="field span2"><label for="f-combustible">Combustible</label>
+                <select id="f-combustible">
+                  <option value="diesel" selected>Diésel</option>
+                  <option value="gasoline">Gasolina</option>
+                  <option value="hybrid">Híbrido</option>
+                  <option value="electric">Eléctrico</option>
+                </select>
+              </div>
+              <div class="field span3"><label for="f-consumo-ref">Consumo de referencia (L/100 km)</label><input type="text" inputmode="decimal" id="f-consumo-ref" value="6,1"></div>
+              <div class="field span3"><label for="f-consumo-custom">Tu consumo real <span class="light">(opcional)</span></label><input type="text" inputmode="decimal" id="f-consumo-custom" placeholder="6,4"></div>
+            </div>
+            <p class="editor-note">Solo se guarda en este navegador el perfil del coche: marca, modelo, año, motor, combustible y consumos. No se guardan matrículas, rutas ni datos personales.</p>
+            <div class="editor-actions">
+              <button type="button" class="btn btn-dark" id="btn-save-coche">Guardar mi coche</button>
+              <span class="note" id="coche-status"></span>
+            </div>
+          </details>
+
           <form class="fields" id="trip-form" autocomplete="off">
-            <div class="field span6">
-              <label for="f-vehiculo">Vehículo</label>
-              <input type="text" id="f-vehiculo" value="Opel Astra H GTC · 2010 · 1.9 CDTI" placeholder="Marca, modelo, año y motor">
-            </div>
-            <div class="field span3">
-              <label for="f-origen">Origen</label>
-              <input type="text" id="f-origen" value="Córdoba" placeholder="Ciudad de salida">
-            </div>
-            <div class="field span3">
-              <label for="f-destino">Destino</label>
-              <input type="text" id="f-destino" value="Málaga" placeholder="Ciudad de llegada">
-            </div>
-            <div class="field span2">
-              <label for="f-conduccion">Conducción</label>
-              <select id="f-conduccion">
-                <option value="tranquilo">Tranquilo</option>
-                <option value="normal" selected>Normal</option>
-                <option value="sport">Sport</option>
-              </select>
-            </div>
+            <div class="field span6"><label for="f-origen">De</label><input type="text" id="f-origen" value="Córdoba" placeholder="Ciudad de salida"></div>
+            <div class="field span6"><label for="f-destino">A</label><input type="text" id="f-destino" value="Chipiona" placeholder="Ciudad de llegada"></div>
             <details class="advanced-fields">
-              <summary>Ajustar cálculo</summary>
+              <summary>Personalizar cálculo</summary>
               <div class="advanced-grid">
-                <div class="field span2">
-                  <label for="f-distancia">Distancia (km)</label>
-                  <input type="text" inputmode="decimal" id="f-distancia" value="165" placeholder="165">
-                </div>
-                <div class="field span2">
-                  <label for="f-consumo">Consumo base (L/100 km)</label>
-                  <input type="text" inputmode="decimal" id="f-consumo" value="6,1" placeholder="6,1">
-                </div>
-                <div class="field span2">
-                  <label for="f-precio">Precio combustible (€/L)</label>
-                  <input type="text" inputmode="decimal" id="f-precio" value="1,455" placeholder="1,455">
-                </div>
+                <div class="field span2"><label for="f-viaje">Tipo de viaje</label>
+                  <select id="f-viaje"><option value="ida" selected>Ida</option><option value="vuelta">Ida y vuelta</option></select></div>
+                <div class="field span2"><label for="f-pasajeros">Pasajeros</label>
+                  <select id="f-pasajeros"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+                <div class="field span2"><label for="f-precio">Precio combustible (€/L) <span class="light">(opcional)</span></label><input type="text" inputmode="decimal" id="f-precio" value="1,49" placeholder="1,49"></div>
+                <div class="field span2"><label for="f-conduccion">Conducción</label>
+                  <select id="f-conduccion"><option value="tranquilo">Tranquila</option><option value="normal" selected>Normal</option><option value="sport">Dinámica</option></select></div>
+                <div class="field span2"><label for="f-clima">Aire acondicionado</label>
+                  <select id="f-clima"><option value="off" selected>Apagado</option><option value="on">Encendido</option></select></div>
+                <div class="field span2"><label for="f-carga">Carga</label>
+                  <select id="f-carga"><option value="light">Ligera</option><option value="normal" selected>Normal</option><option value="heavy">Pesada</option></select></div>
+                <div class="field span2"><label for="f-trafico">Tráfico</label>
+                  <select id="f-trafico"><option value="low" selected>Fluido</option><option value="medium">Medio</option><option value="high">Denso</option></select></div>
+                <div class="field span2"><label for="f-peajes">Peajes (€)</label><input type="text" inputmode="decimal" id="f-peajes" value="" placeholder="0"></div>
+                <div class="field span2"><label for="f-parking">Parking (€)</label><input type="text" inputmode="decimal" id="f-parking" value="" placeholder="0"></div>
+                <div class="field span2"><label for="f-otros">Otros gastos (€)</label><input type="text" inputmode="decimal" id="f-otros" value="" placeholder="0"></div>
+                <div class="field span2"><label for="f-distancia">Distancia manual (km) <span class="light">(sin ruta automática)</span></label><input type="text" inputmode="decimal" id="f-distancia" value="245" placeholder="245"></div>
               </div>
             </details>
           </form>
 
           <div class="calc-actions">
             <button type="button" class="btn btn-lime" id="btn-calc">Calcular mi viaje</button>
-            <span class="note">Una estimación por pulsación. Ajusta los datos avanzados si los conoces.</span>
+            <span class="note">Estimación orientativa. Personaliza el cálculo si conoces los datos.</span>
           </div>
         </div>
 
         <div class="calc-results" aria-live="polite">
           <div class="res-top">
             <span class="res-label">Resultado estimado</span>
-            <span class="res-chip">Ida</span>
+            <span class="res-chip" id="r-viaje">Ida</span>
           </div>
-          <p class="res-route" id="r-ruta">Indica origen y destino para empezar</p>
+          <p class="res-route" id="r-ruta">Indica de dónde sales y adónde vas</p>
+          <p class="res-line" id="r-coche">—</p>
           <div class="res-main">
-            <div class="k">Coste combustible</div>
-            <div class="v" id="r-coste">—</div>
+            <div class="k">Coste total</div>
+            <div class="v" id="r-total">—</div>
           </div>
           <div class="res-grid">
-            <div>
-              <div class="k">Combustible necesario</div>
-              <div class="v" id="r-litros">—</div>
-            </div>
-            <div>
-              <div class="k">Coste por 100 km</div>
-              <div class="v" id="r-coste100">—</div>
-            </div>
+            <div><div class="k">Combustible</div><div class="v" id="r-litros">—</div></div>
+            <div><div class="k">Por persona</div><div class="v" id="r-persona">—</div></div>
           </div>
           <p class="res-range" id="r-rango">Rango probable: —</p>
+          <div class="res-detail" id="r-detalle"></div>
           <p class="res-explanation" id="r-explicacion">El cálculo aparecerá aquí con una explicación de los datos utilizados.</p>
-          <p class="res-note" id="r-nota">Sin llamadas IA ni datos enviados mientras escribes.</p>
+          <p class="res-note" id="r-nota">No se envían datos mientras escribes. El cálculo se lanza al pulsar el botón.</p>
         </div>
       </div>
     </div>
@@ -385,12 +408,12 @@
   <section class="section" id="mi-coche">
     <div class="wrap">
       <p class="overline">Mi coche</p>
-      <h2>Opel Astra H GTC</h2>
+      <h2 id="mc-h2">Opel Astra H GTC</h2>
 
       <div class="car-panel">
         <div class="car-id">
-          <div class="name">Opel Astra H GTC</div>
-          <div class="spec">1.9 CDTI · Diésel · 2010</div>
+          <div class="name" id="mc-nombre">Opel Astra H GTC</div>
+          <div class="spec" id="mc-especificaciones">1.9 CDTI 120 CV · Diésel · 2010</div>
           <div class="odo">
             <div class="k">Kilómetros</div>
             <div class="v">187.420 km</div>
@@ -399,14 +422,14 @@
         </div>
         <div class="car-stats">
           <div class="stat">
-            <div class="k">Consumo medio</div>
-            <div class="v">6,1 L/100 km</div>
-            <div class="note">Media de tus últimos 5 repostajes</div>
+            <div class="k">Consumo de referencia</div>
+            <div class="v" id="mc-consumo">6,1 L/100 km</div>
+            <div class="note" id="mc-consumo-note">Catálogo MiMotor</div>
           </div>
           <div class="stat">
-            <div class="k">Último precio combustible</div>
-            <div class="v">1,455 €/L</div>
-            <div class="note">Gasóleo A · actualizado hoy</div>
+            <div class="k">Tu consumo</div>
+            <div class="v" id="mc-consumo-real">—</div>
+            <div class="note" id="mc-consumo-real-note">Indícalo en Tu coche si lo conoces</div>
           </div>
           <div class="stat">
             <div class="k">Próximo mantenimiento</div>
@@ -414,6 +437,9 @@
             <div class="note">Aceite, filtro de aceite y filtro de aire</div>
           </div>
         </div>
+      </div>
+      <div class="calc-actions" style="margin-top: 14px;">
+        <a class="note" href="#editor-coche" style="text-decoration: underline; text-underline-offset: 3px;">Editar mi coche</a>
       </div>
     </div>
   </section>
@@ -527,111 +553,295 @@
 
 <script>
 (function () {
-  var button = document.getElementById('btn-calc');
-  var vehicle = document.getElementById('f-vehiculo');
-  var origen = document.getElementById('f-origen');
-  var destino = document.getElementById('f-destino');
-  var driving = document.getElementById('f-conduccion');
-  var dist = document.getElementById('f-distancia');
-  var cons = document.getElementById('f-consumo');
-  var price = document.getElementById('f-precio');
-  var rRuta = document.getElementById('r-ruta');
-  var rCoste = document.getElementById('r-coste');
-  var rLitros = document.getElementById('r-litros');
-  var rCoste100 = document.getElementById('r-coste100');
-  var rRango = document.getElementById('r-rango');
-  var rExplanation = document.getElementById('r-explicacion');
-  var rNota = document.getElementById('r-nota');
+  'use strict';
+  var Profile = window.MiMotorProfile;
+  var Calculator = window.MiMotorCalculator;
+  var Api = window.MiMotorTripApi;
 
-  function fmt(n, dec) {
-    return n.toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  function $(id) { return document.getElementById(id); }
+  function fmt(n, dec) { return n.toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+  function money(n) { return fmt(n, 2) + ' €'; }
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
   }
 
-  function calcLocal() {
-    var result = MiMotorCalculator.calculateTrip({
-      distance: dist.value,
-      baseConsumption: cons.value,
-      fuelPrice: price.value,
-      driving: driving.value
-    });
-    var o = origen.value.trim() || 'Origen';
-    var dst = destino.value.trim() || 'Destino';
-    var car = vehicle.value.trim() || 'tu coche';
+  var els = {
+    chip: $('chip-vehiculo'),
+    marca: $('f-marca'), modelo: $('f-modelo'), generacion: $('f-generacion'), anio: $('f-anio'),
+    motor: $('f-motor'), combustible: $('f-combustible'),
+    consumoRef: $('f-consumo-ref'), consumoCustom: $('f-consumo-custom'),
+    saveCoche: $('btn-save-coche'), cocheStatus: $('coche-status'),
+    origen: $('f-origen'), destino: $('f-destino'),
+    viaje: $('f-viaje'), pasajeros: $('f-pasajeros'), precio: $('f-precio'),
+    conduccion: $('f-conduccion'), clima: $('f-clima'), carga: $('f-carga'), trafico: $('f-trafico'),
+    peajes: $('f-peajes'), parking: $('f-parking'), otros: $('f-otros'), distancia: $('f-distancia'),
+    btnCalc: $('btn-calc'),
+    rViaje: $('r-viaje'), rRuta: $('r-ruta'), rCoche: $('r-coche'), rTotal: $('r-total'),
+    rLitros: $('r-litros'), rPersona: $('r-persona'), rRango: $('r-rango'), rDetalle: $('r-detalle'),
+    rExpl: $('r-explicacion'), rNota: $('r-nota'),
+    mcH2: $('mc-h2'), mcNombre: $('mc-nombre'), mcSpec: $('mc-especificaciones'),
+    mcConsumo: $('mc-consumo'), mcConsumoNote: $('mc-consumo-note'),
+    mcConsumoReal: $('mc-consumo-real'), mcConsumoRealNote: $('mc-consumo-real-note')
+  };
 
-    if (!result.valid) {
-      rRuta.textContent = o + ' → ' + dst;
-      rCoste.textContent = '—';
-      rLitros.textContent = '—';
-      rCoste100.textContent = '—';
-      rRango.textContent = 'Rango probable: —';
-      rExplanation.textContent = 'Revisa distancia, consumo base y precio en Ajustar cálculo.';
-      rNota.textContent = 'Faltan datos para completar la estimación.';
+  var DEFAULT_PROFILE = {
+    make: 'Opel', model: 'Astra', generation: 'H GTC', year: 2010,
+    engine: '1.9 CDTI 120 CV', fuel: 'diesel', referenceConsumption: 6.1, customConsumption: null
+  };
+
+  var currentProfile = Profile.load();
+
+  function fillEditor(p) {
+    els.marca.value = p.make || '';
+    els.modelo.value = p.model || '';
+    els.generacion.value = p.generation || '';
+    els.anio.value = p.year || '';
+    els.motor.value = p.engine || '';
+    els.combustible.value = p.fuel || 'diesel';
+    els.consumoRef.value = p.referenceConsumption != null ? String(p.referenceConsumption).replace('.', ',') : '';
+    els.consumoCustom.value = p.customConsumption != null ? String(p.customConsumption).replace('.', ',') : '';
+  }
+
+  function renderProfile() {
+    var p = currentProfile || DEFAULT_PROFILE;
+    fillEditor(p);
+    els.chip.innerHTML = '<strong>' + esc(Profile.name(p)) + '</strong><span class="sep">·</span>'
+      + esc(p.engine) + ' · ' + p.year + '<span class="sep">·</span>' + esc(Profile.fuelLabel(p.fuel))
+      + ' <a class="change" href="#editor-coche">Cambiar</a>';
+    var nombre = Profile.name(p);
+    els.mcH2.textContent = nombre;
+    els.mcNombre.textContent = nombre;
+    els.mcSpec.textContent = Profile.spec(p);
+    els.mcConsumo.textContent = fmt(p.referenceConsumption, 1) + ' L/100 km';
+    els.mcConsumoNote.textContent = p.customConsumption ? 'Consumo de referencia' : 'Catálogo MiMotor';
+    if (p.customConsumption) {
+      els.mcConsumoReal.textContent = fmt(p.customConsumption, 1) + ' L/100 km';
+      els.mcConsumoRealNote.textContent = 'Tu consumo real, indicado manualmente';
+    } else {
+      els.mcConsumoReal.textContent = '—';
+      els.mcConsumoRealNote.textContent = 'Indícalo en Tu coche si lo conoces';
+    }
+    els.cocheStatus.textContent = currentProfile ? 'Coche guardado en este navegador.' : '';
+  }
+
+  function readEditor() {
+    return {
+      make: els.marca.value, model: els.modelo.value, generation: els.generacion.value,
+      year: els.anio.value, engine: els.motor.value, fuel: els.combustible.value,
+      referenceConsumption: els.consumoRef.value,
+      customConsumption: els.consumoCustom.value.trim() ? els.consumoCustom.value : null
+    };
+  }
+
+  els.saveCoche.addEventListener('click', function () {
+    var clean = Profile.sanitize(readEditor());
+    if (!clean) {
+      els.cocheStatus.textContent = 'Revisa los datos: falta marca, modelo, año, motor, combustible o consumo.';
+      return;
+    }
+    var ok = Profile.save(clean);
+    if (ok) {
+      currentProfile = Profile.load();
+      renderProfile();
+      els.cocheStatus.textContent = 'Coche guardado en este navegador.';
+    } else {
+      els.cocheStatus.textContent = 'No se pudo guardar en este navegador.';
+    }
+  });
+
+  function effectiveProfile() {
+    return currentProfile || DEFAULT_PROFILE;
+  }
+
+  function numberValue(el, fallback) {
+    var value = el.value.trim();
+    return value ? value : fallback;
+  }
+
+  function buildAdjustments(factors, source) {
+    var list = [];
+    if (source === 'manual') {
+      list.push({ label: 'Consumo indicado por ti', percent: 0 });
+    }
+    var definitions = [
+      ['driving', 'Conducción'], ['climate', 'Aire acondicionado'],
+      ['load', 'Carga'], ['traffic', 'Tráfico']
+    ];
+    definitions.forEach(function (pair) {
+      var factor = factors[pair[0]];
+      if (typeof factor === 'number' && factor !== 1) {
+        list.push({ label: pair[1], percent: Math.round((factor - 1) * 100) });
+      }
+    });
+    return list;
+  }
+
+  function localView(result, profile, origin, destination, price, note) {
+    if (!result || !result.valid) {
+      return { valid: false, routeLabel: (origin || 'Origen') + ' → ' + (destination || 'Destino'), note: 'Revisa distancia, consumo y precio en Personalizar cálculo.' };
+    }
+    return {
+      valid: true,
+      routeLabel: origin + ' → ' + destination + ' · ' + fmt(result.distanceKm, 0) + ' km',
+      vehicleLabel: Profile.name(profile),
+      roundTrip: result.roundTrip,
+      consumption: result.consumption,
+      price: price,
+      liters: result.liters,
+      fuelCost: result.cost,
+      extrasTotal: result.extras.total,
+      total: result.total,
+      perPerson: result.perPerson,
+      rangeMin: result.rangeMin,
+      rangeMax: result.rangeMax,
+      adjustments: result.adjustments,
+      note: note
+    };
+  }
+
+  function remoteView(remote, profile) {
+    var route = remote.route;
+    var vehicle = remote.vehicle;
+    var consumption = remote.consumption;
+    var cost = remote.cost;
+    var routeLabel = route.origin + ' → ' + route.destination + ' · ' + fmt(cost.distanceKm, 0) + ' km';
+    if (route.durationMinutes) routeLabel += ' · aprox. ' + fmt(route.durationMinutes, 0) + ' min';
+    var vehicleLabel = [vehicle.make, vehicle.model, vehicle.generation].filter(Boolean).join(' ');
+    var adjustments = buildAdjustments(consumption.factors, consumption.source);
+    var priceSource = remote.price && remote.price.source === 'manual' ? 'precio indicado por ti' : 'precio medio';
+    var note = 'Ruta: ' + route.provider + ' · Carburante: Ministerio · Vehículo: catálogo MiMotor';
+    return {
+      valid: true,
+      routeLabel: routeLabel,
+      vehicleLabel: vehicleLabel,
+      roundTrip: cost.roundTrip,
+      consumption: consumption,
+      price: remote.price ? remote.price.used : remote.fuel.averagePrice,
+      liters: cost.liters,
+      fuelCost: cost.estimated,
+      extrasTotal: cost.extras.total,
+      total: cost.total,
+      perPerson: cost.perPerson,
+      rangeMin: cost.min,
+      rangeMax: cost.max,
+      adjustments: adjustments,
+      note: note + ' · ' + priceSource
+    };
+  }
+
+  function render(view) {
+    if (!view || !view.valid) {
+      els.rRuta.textContent = view ? view.routeLabel : 'Indica de dónde sales y adónde vas';
+      els.rCoche.textContent = '—';
+      els.rTotal.textContent = '—';
+      els.rLitros.textContent = '—';
+      els.rPersona.textContent = '—';
+      els.rRango.textContent = 'Rango probable: —';
+      els.rDetalle.innerHTML = '';
+      els.rExpl.textContent = view ? view.note : 'El cálculo aparecerá aquí con una explicación de los datos utilizados.';
+      return;
+    }
+    els.rViaje.textContent = view.roundTrip ? 'Ida y vuelta' : 'Ida';
+    els.rRuta.textContent = view.routeLabel;
+    els.rCoche.textContent = view.vehicleLabel + ' · ' + fmt(view.consumption.adjusted, 1) + ' L/100 km';
+    els.rTotal.textContent = money(view.total);
+    els.rLitros.textContent = fmt(view.liters, 2) + ' L';
+    els.rPersona.textContent = view.perPerson != null ? money(view.perPerson) : '—';
+    els.rRango.textContent = 'Rango probable: ' + money(view.rangeMin) + ' – ' + money(view.rangeMax);
+
+    var rows = [
+      ['Distancia', fmt(view.distanceKm == null ? view.liters * 100 / view.consumption.adjusted : view.distanceKm, 0) + ' km'],
+      ['Consumo estimado', fmt(view.consumption.adjusted, 1) + ' L/100 km'],
+      ['Precio', fmt(view.price, 3) + ' €/L'],
+      ['Combustible', fmt(view.liters, 2) + ' L'],
+      ['Coste combustible', money(view.fuelCost)],
+      ['Extras (peajes, parking y otros)', money(view.extrasTotal)]
+    ];
+    els.rDetalle.innerHTML = rows.map(function (row) {
+      return '<div class="row"><span>' + row[0] + '</span><b>' + row[1] + '</b></div>';
+    }).join('');
+
+    var explanation = 'Partimos de ' + fmt(view.consumption.base, 1) + ' L/100 km.';
+    if (view.adjustments.length) {
+      explanation += ' Ajustes: ' + view.adjustments.map(function (a) {
+        return a.percent === 0 ? a.label : a.label + (a.percent > 0 ? ' +' : ' ') + a.percent + ' %';
+      }).join(', ') + '.';
+    }
+    explanation += ' Consumo estimado: ' + fmt(view.consumption.adjusted, 1) + ' L/100 km.';
+    els.rExpl.textContent = explanation;
+    els.rNota.textContent = view.note || '';
+  }
+
+  els.btnCalc.addEventListener('click', async function () {
+    var profile = effectiveProfile();
+    var origin = els.origen.value.trim() || 'Origen';
+    var destination = els.destino.value.trim() || 'Destino';
+    var roundTrip = els.viaje.value === 'vuelta';
+    var price = numberValue(els.precio, '1,49');
+
+    var localInput = {
+      distance: els.distancia.value,
+      baseConsumption: profile.referenceConsumption,
+      customConsumption: profile.customConsumption,
+      fuelPrice: price,
+      driving: els.conduccion.value,
+      climate: els.clima.value,
+      load: els.carga.value,
+      traffic: els.trafico.value,
+      roundTrip: roundTrip,
+      passengers: els.pasajeros.value,
+      extras: { tolls: els.peajes.value, parking: els.parking.value, other: els.otros.value }
+    };
+    var local = Calculator.calculateTrip(localInput);
+    var localViewResult = localView(local, profile, origin, destination, Calculator.parseNumber(price), 'Estimación local con tus datos: distancia y precio manuales.');
+
+    if (!Api.isConfigured()) {
+      render(localViewResult);
       return;
     }
 
-    rRuta.textContent = o + ' → ' + dst + ' · ' + fmt(MiMotorCalculator.parseNumber(dist.value), 0) + ' km';
-    rCoste.textContent = fmt(result.cost, 2) + ' €';
-    rLitros.textContent = fmt(result.liters, 2) + ' L';
-    rCoste100.textContent = fmt(result.costPer100, 2) + ' €';
-    rRango.textContent = 'Rango probable: ' + fmt(result.rangeMin, 2) + ' € – ' + fmt(result.rangeMax, 2) + ' €';
-    rExplanation.textContent = car + ': base ' + fmt(MiMotorCalculator.parseNumber(cons.value), 1) + ' L/100 km, ajuste ' + driving.options[driving.selectedIndex].text.toLowerCase() + ', precio ' + fmt(MiMotorCalculator.parseNumber(price.value), 3) + ' €/L.';
-    rNota.textContent = 'Estimación local · el routing y el precio real se conectarán mediante backend.';
-  }
+    var advanced = {
+      climate: els.clima.value,
+      load: els.carga.value,
+      traffic: els.trafico.value,
+      roundTrip: roundTrip,
+      passengers: Number(els.pasajeros.value),
+      tolls: els.peajes.value.trim() ? els.peajes.value : undefined,
+      parking: els.parking.value.trim() ? els.parking.value : undefined,
+      other: els.otros.value.trim() ? els.otros.value : undefined,
+      customConsumption: profile.customConsumption || undefined,
+      fuelPrice: els.precio.value.trim() ? els.precio.value : undefined
+    };
 
-  function renderRemote(result) {
-    var route = result.route;
-    var fuel = result.fuel;
-    var consumption = result.consumption;
-    var cost = result.cost;
-    var car = result.vehicle;
-    rRuta.textContent = (route.origin || origen.value || 'Origen') + ' → ' + (route.destination || destino.value || 'Destino') + ' · ' + fmt(route.distanceKm, 0) + ' km';
-    rCoste.textContent = fmt(cost.estimated, 2) + ' €';
-    rLitros.textContent = fmt(cost.liters, 2) + ' L';
-    rCoste100.textContent = fmt(cost.per100Km, 2) + ' €';
-    rRango.textContent = 'Rango probable: ' + fmt(cost.min, 2) + ' € – ' + fmt(cost.max, 2) + ' €';
-    rExplanation.textContent = (car.make + ' ' + car.model) + ': base ' + fmt(consumption.base, 1) + ' L/100 km, ajuste ' + driving.options[driving.selectedIndex].text.toLowerCase() + ', precio medio ' + fmt(fuel.averagePrice, 3) + ' €/L en ' + fuel.area + '.';
-    var routeSource = route.provider === 'openrouteservice' ? 'OpenRouteService' : route.provider;
-    var fuelSource = fuel.source && fuel.source.indexOf('minetur.gob.es') >= 0 ? 'MITECO' : fuel.source;
-    var vehicleSource = car.source === 'local-catalog' ? 'Catálogo MiMotor' : (car.source === 'deepseek' ? 'Resolución IA' : car.source);
-    rNota.textContent = 'Datos del cálculo · Ruta: ' + routeSource + ' · Combustible: ' + fuelSource + ' · Vehículo: ' + vehicleSource + ' · Consumo: MiMotor' + (fuel.fallback ? ' · último dato disponible' : '');
-  }
-
-  function renderError(error) {
-    rCoste.textContent = '—';
-    rLitros.textContent = '—';
-    rCoste100.textContent = '—';
-    rRango.textContent = 'Rango probable: —';
-    rExplanation.textContent = error.message || 'No se pudo completar el cálculo.';
-    rNota.textContent = 'No se ha mostrado una estimación sin datos verificables.';
-  }
-
-  button.addEventListener('click', async function () {
-    var originalLabel = button.textContent;
-    button.disabled = true;
-    button.setAttribute('aria-busy', 'true');
-    rNota.textContent = MiMotorTripApi.isConfigured() ? 'Consultando ruta, vehículo y carburante…' : 'Calculando con los datos locales…';
+    els.btnCalc.disabled = true;
+    els.btnCalc.setAttribute('aria-busy', 'true');
+    els.rNota.textContent = 'Consultando ruta y carburante…';
     try {
-      var remote = await MiMotorTripApi.calculate({
-        vehicle: vehicle.value,
-        origin: origen.value,
-        destination: destino.value,
-        drivingMode: driving.value,
-        advanced: {}
+      var remote = await Api.calculate({
+        vehicle: Profile.describe(profile),
+        origin: origin,
+        destination: destination,
+        drivingMode: els.conduccion.value,
+        advanced: advanced
       });
-      if (remote) renderRemote(remote);
-      else calcLocal();
+      if (remote) render(remoteView(remote, profile));
+      else render(localViewResult);
     } catch (error) {
-      renderError(error);
+      render(localViewResult);
+      els.rNota.textContent = 'No se pudo conectar con el servicio; se usa tu distancia y precio manuales.';
     } finally {
-      button.disabled = false;
-      button.removeAttribute('aria-busy');
-      button.textContent = originalLabel;
+      els.btnCalc.disabled = false;
+      els.btnCalc.removeAttribute('aria-busy');
     }
+
     if (window.innerWidth < 980) {
       document.querySelector('.calc-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   });
 
+  renderProfile();
 })();
 </script>
 </body>

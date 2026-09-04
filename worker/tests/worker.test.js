@@ -34,7 +34,70 @@ test('construye un viaje con vehículo conocido sin llamar a IA', async () => {
   assert.equal(result.fuel.cached, false);
   assert.equal(result.cost.liters, 14.95);
   assert.equal(result.cost.estimated, 22.13);
+  assert.equal(result.cost.roundTrip, false);
+  assert.equal(result.cost.extras.total, 0);
+  assert.equal(result.cost.total, 22.13);
+  assert.equal(result.cost.perPerson, 22.13);
   assert.equal(result.usage.remainingAiCalculations, null);
+});
+
+test('aplica ida y vuelta, pasajeros y extras al coste', async () => {
+  const result = await buildTrip({
+    vehicle: knownVehicle,
+    origin: 'Córdoba',
+    destination: 'Chipiona',
+    drivingMode: 'sport',
+    advanced: {
+      roundTrip: true,
+      passengers: 4,
+      tolls: '5',
+      parking: '3',
+      other: '2'
+    }
+  }, { store: new MemoryStore(), providers: providers(), env: {} });
+
+  assert.equal(result.consumption.adjusted, 6.71);
+  assert.equal(result.cost.distanceKm, 490);
+  assert.equal(result.cost.roundTrip, true);
+  assert.equal(result.cost.liters, 32.88);
+  assert.equal(result.cost.extras.total, 10);
+  assert.equal(result.cost.total, 58.66);
+  assert.equal(result.cost.perPerson, 14.67);
+});
+
+test('cambiar parámetros del viaje no vuelve a resolver el vehículo', async () => {
+  let calls = 0;
+  const ai = {
+    async normalizeVehicle(input) {
+      calls += 1;
+      return new MockAIProvider({
+        make: 'Seat', model: 'León', generation: 'III', year: 2018,
+        engine: '1.5 TSI', fuel: 'gasoline', powerCv: 150, powerKw: 110,
+        referenceConsumption: 6.4
+      }).normalizeVehicle(input);
+    }
+  };
+  const store = new MemoryStore();
+  const env = { DEEPSEEK_API_KEY: 'configured-for-test', RATE_LIMIT_SECRET: 'test-secret' };
+  const vehicle = 'Seat León 2018 1.5 150 CV';
+
+  const first = await buildTrip({
+    vehicle, origin: 'Córdoba', destination: 'Chipiona', drivingMode: 'normal', advanced: {}
+  }, { store, providers: providers(ai), env });
+  assert.equal(calls, 1);
+
+  const second = await buildTrip({
+    vehicle, origin: 'Córdoba', destination: 'Chipiona', drivingMode: 'sport',
+    advanced: { roundTrip: true, passengers: 4, climate: 'on', load: 'heavy', tolls: '5' }
+  }, { store, providers: providers(ai), env });
+  const third = await buildTrip({
+    vehicle, origin: 'Córdoba', destination: 'Sevilla', drivingMode: 'tranquilo',
+    advanced: { fuelPrice: '1,7', parking: '4' }
+  }, { store, providers: providers(ai), env });
+
+  assert.equal(calls, 1, 'cambiar los parámetros del viaje no debe volver a llamar a IA');
+  assert.equal(second.vehicle.cached, true);
+  assert.equal(third.vehicle.cached, true);
 });
 
 test('rechaza payload inválido antes de tocar proveedores', async () => {

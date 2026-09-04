@@ -15,3 +15,7 @@ La landing ya permite calcular un viaje con origen, destino, distancia, consumo 
 El formulario principal pedirá vehículo, origen, destino y estilo de conducción. Distancia, combustible, consumo y precio llegarán de adapters externos cuando estén disponibles; mientras tanto habrá un fallback explícito y auditable, sin presentar datos de ejemplo como datos reales.
 
 No se añaden login, pagos, matrículas, perfiles ni diagnóstico de averías.
+
+## Perfil "Tu coche"
+
+El usuario puede guardar su coche como perfil estructurado (marca, modelo, generación, año, motor, combustible y consumos). El perfil se persiste únicamente en el navegador con una lista blanca estricta y validación al leer. El consumo manual indicado por el usuario tiene prioridad sobre el consumo de referencia en el cálculo. No se guardan matrículas, rutas ni datos personales.

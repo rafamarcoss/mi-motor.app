@@ -8,7 +8,8 @@ function boundedFactor(values, value) {
 }
 
 export function calculateConsumption({ referenceConsumption, drivingMode, advanced = {} }) {
-  const base = Number(referenceConsumption);
+  const manual = Number(advanced.customConsumption);
+  const base = Number.isFinite(manual) && manual > 0 ? manual : Number(referenceConsumption);
   if (!Number.isFinite(base) || base <= 0) {
     throw new Error('referenceConsumption inválido.');
   }
@@ -24,6 +25,7 @@ export function calculateConsumption({ referenceConsumption, drivingMode, advanc
     adjusted: round(adjusted, 2),
     min: round(adjusted * 0.92, 2),
     max: round(adjusted * 1.08, 2),
+    source: Number.isFinite(manual) && manual > 0 ? 'manual' : 'reference',
     factors: {
       driving: DRIVING_FACTORS[drivingMode] || 1,
       climate: CLIMATE_FACTORS[advanced.climate] || 1,
@@ -33,21 +35,47 @@ export function calculateConsumption({ referenceConsumption, drivingMode, advanc
   };
 }
 
-export function calculateCost({ distanceKm, consumption, fuelPrice }) {
+export function calculateCost({ distanceKm, consumption, fuelPrice, advanced = {} }) {
   const distance = Number(distanceKm);
   const price = Number(fuelPrice);
   if (!Number.isFinite(distance) || distance <= 0 || !Number.isFinite(price) || price <= 0) {
     throw new Error('distanceKm y fuelPrice deben ser positivos.');
   }
 
-  const liters = round(distance / 100 * consumption.adjusted, 2);
+  const roundTrip = advanced.roundTrip === true || advanced.roundTrip === 'true';
+  const effectiveDistance = roundTrip ? distance * 2 : distance;
+  const passengers = Number.isInteger(Number(advanced.passengers)) && Number(advanced.passengers) >= 1
+    ? Number(advanced.passengers)
+    : 1;
+
+  const extras = advanced.extras && typeof advanced.extras === 'object' ? advanced.extras : {};
+  const tolls = money(extras.tolls);
+  const parking = money(extras.parking);
+  const other = money(extras.other);
+  const extrasTotal = round(tolls + parking + other, 2);
+
+  const liters = round(effectiveDistance / 100 * consumption.adjusted, 2);
+  const fuel = round(liters * price, 2);
+  const total = round(fuel + extrasTotal, 2);
+
   return {
     liters,
-    estimated: round(liters * price, 2),
-    min: round(distance / 100 * consumption.min * price, 2),
-    max: round(distance / 100 * consumption.max * price, 2),
-    per100Km: round(consumption.adjusted * price, 2)
+    estimated: fuel,
+    min: round(effectiveDistance / 100 * consumption.min * price + extrasTotal, 2),
+    max: round(effectiveDistance / 100 * consumption.max * price + extrasTotal, 2),
+    per100Km: round(consumption.adjusted * price, 2),
+    distanceKm: round(effectiveDistance, 1),
+    roundTrip,
+    extras: { tolls, parking, other, total: extrasTotal },
+    total,
+    passengers,
+    perPerson: round(total / passengers, 2)
   };
+}
+
+function money(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.round(number * 100) / 100 : 0;
 }
 
 function round(value, decimals) {

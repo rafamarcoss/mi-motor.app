@@ -10,10 +10,21 @@ Estos contratos se sirven bajo `/api/` desde un runtime serverless. El frontend 
 {"vehicle":"Opel Astra H GTC 2010 1.9 CDTI 120 CV","origin":"Córdoba","destination":"Chipiona","drivingMode":"normal","advanced":{}}
 ```
 
+El campo `advanced` acepta personalización opcional. Todos estos valores solo alteran la matemática del coste; ninguno vuelve a resolver el vehículo ni consume cuota IA:
+
+```json
+{"climate":"off|on","load":"light|normal|heavy","traffic":"low|medium|high","roundTrip":false,"passengers":1,"customConsumption":6.1,"fuelPrice":1.49,"tolls":0,"parking":0,"other":0}
+```
+
+- `customConsumption` tiene prioridad sobre el consumo de referencia del vehículo.
+- `fuelPrice` (€/L) tiene prioridad sobre el precio medio de la fuente cuando se indica.
+- `tolls`, `parking`, `other` (€) se suman como extras.
+- `roundTrip` duplica la distancia de la ruta; `passengers` divide el coste total por persona.
+
 La respuesta compone la ficha del vehículo, la ruta, el precio de combustible, el consumo ajustado, el coste y el uso de IA. Los valores del ejemplo son una lectura puntual del dataset MITECO y cambian con cada actualización:
 
 ```json
-{"route":{"origin":"Córdoba","destination":"Chipiona","distanceKm":245,"durationMinutes":155,"provider":"openrouteservice"},"vehicle":{"make":"Opel","model":"Astra","generation":"H GTC","year":2010,"engine":"1.9 CDTI","fuel":"diesel","powerCv":120,"powerKw":88,"referenceConsumption":6.1,"confidence":0.96,"source":"local-catalog","vehicleId":"opel-astra-h-gtc-2010-1-9-cdti-120"},"consumption":{"base":6.1,"adjusted":6.1,"min":5.61,"max":6.59,"factors":{"driving":1,"climate":1,"load":1,"traffic":1}},"fuel":{"type":"diesel","averagePrice":1.907,"area":"Córdoba","areaType":"municipality","sampleSize":58,"statistics":{"samples":58,"min":1.779,"max":1.999,"mean":1.907,"median":1.949},"source":"https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/","updatedAt":"31/08/2026 19:21:33","fallback":false},"cost":{"liters":14.95,"estimated":28.5,"min":26.2,"max":30.78,"per100Km":11.64},"usage":{"remainingAiCalculations":null}}
+{"route":{"origin":"Córdoba","destination":"Chipiona","distanceKm":245,"durationMinutes":155,"provider":"openrouteservice"},"vehicle":{"make":"Opel","model":"Astra","generation":"H GTC","year":2010,"engine":"1.9 CDTI","fuel":"diesel","powerCv":120,"powerKw":88,"referenceConsumption":6.1,"confidence":0.96,"source":"local-catalog","vehicleId":"opel-astra-h-gtc-2010-1-9-cdti-120"},"consumption":{"base":6.1,"adjusted":6.1,"min":5.61,"max":6.59,"source":"reference","factors":{"driving":1,"climate":1,"load":1,"traffic":1}},"fuel":{"type":"diesel","averagePrice":1.907,"area":"Córdoba","areaType":"municipality","sampleSize":58,"statistics":{"samples":58,"min":1.779,"max":1.999,"mean":1.907,"median":1.949},"source":"https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/","updatedAt":"31/08/2026 19:21:33","fallback":false},"price":{"used":1.907,"source":"miteco-rest"},"cost":{"liters":14.95,"estimated":28.5,"min":26.2,"max":30.78,"per100Km":11.64,"distanceKm":245,"roundTrip":false,"extras":{"tolls":0,"parking":0,"other":0,"total":0},"total":28.5,"passengers":1,"perPerson":28.5},"usage":{"remainingAiCalculations":null}}
 ```
 
 El Worker geocodifica, valida el país, limita longitud y cachea por origen/destino normalizados. El cliente no llama a proveedores externos.
