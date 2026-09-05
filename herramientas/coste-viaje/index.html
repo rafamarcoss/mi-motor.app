@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Calculadora de coste de viaje con tu coche | MiMotor</title>
+  <meta name="description" content="Calcula combustible, extras y coste por persona con la ruta, el consumo y el precio de carburante de tu coche.">
+  <link rel="canonical" href="https://mi-motor.app/herramientas/coste-viaje/">
+  <meta property="og:title" content="Coste real de un viaje en coche">
+  <meta property="og:description" content="Ruta, consumo personalizado, combustible, extras y reparto por persona.">
+  <meta property="og:url" content="https://mi-motor.app/herramientas/coste-viaje/">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="../../css/site.css">
+  <script src="../../js/vehicle-profile.js" defer></script>
+  <script src="../../js/calculator-core.js" defer></script>
+  <script src="../../js/trip-api.js" defer></script>
+  <script src="../../js/trip-share.js" defer></script>
+  <script src="../../js/trip-ui.js" defer></script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Calculadora de coste de viaje","url":"https://mi-motor.app/herramientas/coste-viaje/","applicationCategory":"TravelApplication","operatingSystem":"Web","inLanguage":"es-ES"}</script>
+</head>
+<body>
+  <header class="site-header"><div class="wrap header-inner"><a class="brand" href="../../"><span class="brand-mark"></span>MiMotor</a><nav class="nav" aria-label="Navegación principal"><a href="../">Herramientas</a><a href="../../ia-y-coche/">IA y tu coche</a><a href="../../guias/">Guías</a><a href="../../actualidad/">Actualidad</a></nav></div></header>
+  <main>
+    <div class="wrap breadcrumb"><a href="../../">Inicio</a> / <a href="../">Herramientas</a> / Coste de viaje</div>
+    <section class="hero"><div class="wrap"><p class="eyebrow">Herramienta principal</p><h1>Calcula cuánto te cuesta realmente un viaje</h1><p class="lead">Calcula con tu consumo y precio. Los valores iniciales son ejemplos: introduce los datos de tu viaje.</p></div></section>
+
+    <div class="wrap trip-layout" data-trip-calculator>
+      <form class="trip-form" data-trip-form autocomplete="off">
+        <section class="card trip-step">
+          <div class="step-heading"><span>1</span><div><p class="eyebrow">Tu coche</p><h2>Identifica el vehículo</h2></div></div>
+          <div class="form-grid">
+            <div class="field"><label for="vehicle-make">Marca</label><input id="vehicle-make" data-trip-vehicle-make list="vehicle-makes" value="Opel" required><datalist id="vehicle-makes"><option value="Opel"></datalist></div>
+            <div class="field"><label for="vehicle-model">Modelo</label><input id="vehicle-model" data-trip-vehicle-model value="Astra" required></div>
+            <div class="field"><label for="vehicle-year">Año</label><input id="vehicle-year" data-trip-vehicle-year type="number" min="1900" max="2027" value="2010" required></div>
+            <div class="field"><label for="vehicle-engine">Motor o versión</label><input id="vehicle-engine" data-trip-vehicle-engine value="1.9 CDTI 120 CV" required></div>
+          </div>
+          <div class="vehicle-summary" data-vehicle-summary></div>
+          <a href="../../tu-coche/">Editar o borrar mi coche guardado</a>
+          <label class="check-row"><input type="checkbox" data-remember-vehicle> Recordar este coche en este dispositivo</label>
+        </section>
+
+        <section class="card trip-step">
+          <div class="step-heading"><span>2</span><div><p class="eyebrow">Viaje</p><h2>Indica origen y destino</h2></div></div>
+          <div class="form-grid">
+            <label class="check-row field full"><input type="checkbox" data-use-api> Consultar ruta y precio externos (requiere API configurada)</label><div class="field"><label for="trip-origin">Origen</label><input id="trip-origin" data-trip-origin value="Córdoba" required></div>
+            <div class="field"><label for="trip-destination">Destino</label><input id="trip-destination" data-trip-destination value="Chipiona" required></div>
+            <div class="field"><label for="trip-distance">Distancia de ida si usas modo local (km)</label><input id="trip-distance" data-trip-distance inputmode="decimal" value="245"></div>
+            <div class="field"><label for="trip-type">Trayecto</label><select id="trip-type" data-trip-type data-local-recalculate><option value="ida">Solo ida</option><option value="vuelta">Ida y vuelta</option></select></div>
+          </div>
+        </section>
+
+        <section class="card trip-step">
+          <div class="step-heading"><span>3</span><div><p class="eyebrow">Combustible</p><h2>Elige el precio</h2></div></div>
+          <div class="form-grid">
+            <div class="field"><label for="price-mode">Modo</label><select id="price-mode" data-trip-price-mode data-local-recalculate><option value="automatico">Automático · consultar API</option><option value="manual">Manual</option></select></div>
+            <div class="field"><label for="fuel-price">Precio utilizado (€/L)</label><input id="fuel-price" data-trip-price data-local-recalculate inputmode="decimal" value="1,49" required></div>
+            <div class="field"><label for="trip-fuel">Combustible</label><select id="trip-fuel" data-trip-fuel><option value="diesel">Diésel</option><option value="gasoline">Gasolina</option><option value="hybrid">Híbrido de gasolina</option><option value="lpg">GLP</option></select></div>
+          </div>
+          <p class="source-line" data-trip-result-price>Diésel · 1,490 €/L</p>
+        </section>
+
+        <details class="card advanced">
+          <summary>Personalizar cálculo</summary>
+          <p class="small">Todos estos cambios se calculan en tu navegador. No provocan una nueva identificación del coche.</p>
+          <div class="form-grid advanced-grid">
+            <div class="field"><label for="reference-consumption">Consumo de referencia</label><input id="reference-consumption" data-trip-consumption value="6,1"></div>
+            <div class="field"><label for="manual-consumption">Mi consumo real (opcional)</label><input id="manual-consumption" data-trip-manual-consumption data-local-recalculate inputmode="decimal" placeholder="Por ejemplo, 6,7"></div>
+            <div class="field"><label for="driving">Conducción</label><select id="driving" data-trip-driving data-local-recalculate><option value="tranquilo">Tranquila</option><option value="normal" selected>Normal</option><option value="dinamico">Dinámica</option></select></div>
+            <div class="field"><label for="route-type">Tipo de ruta</label><select id="route-type" data-trip-route-type data-local-recalculate><option value="ciudad">Ciudad</option><option value="mixto" selected>Mixta</option><option value="carretera">Carretera/autovía</option></select></div>
+            <div class="field"><label for="ac">Aire acondicionado</label><select id="ac" data-trip-ac data-local-recalculate><option value="apagado">Apagado</option><option value="normal" selected>Normal</option><option value="intenso">Intenso</option></select></div>
+            <div class="field"><label for="passengers">Personas</label><input id="passengers" data-trip-passengers data-local-recalculate type="number" min="1" max="9" value="1"></div>
+            <div class="field"><label for="luggage">Equipaje</label><select id="luggage" data-trip-luggage data-local-recalculate><option value="ligero">Ligero</option><option value="normal" selected>Normal</option><option value="cargado">Coche cargado</option></select></div>
+            <div class="field"><label for="speed">Escenario de autovía</label><select id="speed" data-trip-speed data-local-recalculate><option value="100">100 km/h</option><option value="110" selected>110 km/h</option><option value="120">120 km/h</option><option value="130">130 km/h · escenario teórico</option></select></div>
+            <div class="field"><label for="season">Estación</label><select id="season" data-trip-season data-local-recalculate><option value="invierno">Invierno</option><option value="templado" selected>Templado</option><option value="verano">Verano</option></select></div>
+            <div class="field"><label for="tires">Neumáticos</label><select id="tires" data-trip-tires data-local-recalculate><option value="correcta" selected>Presión correcta</option><option value="baja">Ligeramente baja</option></select></div>
+            <div class="field"><label for="tolls">Peajes (€)</label><input id="tolls" data-trip-tolls data-local-recalculate inputmode="decimal" value="0"></div>
+            <div class="field"><label for="parking">Parking (€)</label><input id="parking" data-trip-parking data-local-recalculate inputmode="decimal" value="0"></div>
+            <div class="field"><label for="other-costs">Otros gastos (€)</label><input id="other-costs" data-trip-other data-local-recalculate inputmode="decimal" value="0"></div>
+          </div>
+          <div class="notice warning">130 km/h es solo un escenario de consumo. Respeta siempre los límites legales y adapta la velocidad a las condiciones.</div>
+        </details>
+
+        <button class="btn btn-accent trip-submit" data-trip-submit>Calcular mi viaje</button>
+      </form>
+
+      <aside class="card result calc-results trip-result" aria-live="polite">
+        <div class="result-heading"><span class="eyebrow">Resultado estimado</span><span class="result-chip" data-trip-result-type>Solo ida</span></div>
+        <h2 data-trip-result-route>Córdoba → Chipiona</h2><p data-trip-result-duration>Duración pendiente de calcular</p>
+        <p class="result-car" data-trip-result-vehicle>Tu coche</p>
+        <div class="hero-metric"><span>Coste total</span><strong data-trip-result-cost>—</strong></div>
+        <dl class="metrics result-grid"><div class="metric"><dt>Consumo estimado</dt><dd data-trip-result-consumption>—</dd></div><div class="metric"><dt>Combustible</dt><dd data-trip-result-liters>—</dd></div><div class="metric"><dt>Coste de combustible</dt><dd data-trip-result-fuel-cost>—</dd></div><div class="metric"><dt>Por persona</dt><dd data-trip-result-person>—</dd></div><div class="metric"><dt>Rango probable</dt><dd data-trip-result-range>—</dd></div></dl>
+        <div class="result-explain"><h3>Por qué sale este resultado</h3><p data-trip-result-explanation>Completa el formulario para ver el cálculo.</p><ul data-trip-result-breakdown></ul></div>
+        <div class="result-explain"><h3>Compara conducción</h3><div class="scenarios" data-trip-result-scenarios></div></div>
+        <p class="result-note" data-trip-result-note>Los datos del coche se guardan solo si marcas «Recordar».</p>
+        <button type="button" class="btn btn-accent" data-trip-share disabled>Copiar enlace del cálculo</button>
+        <label class="small" for="share-link">Comparte importes y ajustes, sin coche ni ruta.</label><input id="share-link" data-share-output readonly hidden aria-label="Enlace del cálculo">
+      </aside>
+    </div>
+
+    <section class="section"><div class="wrap prose"><h2>Cómo calcula MiMotor</h2><p>Usa el consumo de referencia del vehículo o el consumo real que indiques. Después aplica factores prudentes de ruta, conducción, climatización, carga, velocidad, estación y neumáticos. La multiplicación es determinista y se ejecuta en tu navegador.</p><p>Los factores sirven para comparar escenarios. No son una medición homologada ni una recomendación de velocidad.</p></div></section>
+  </main>
+  <footer class="site-footer"><div class="wrap footer-inner"><span>© 2026 MiMotor</span><a href="../">Todas las herramientas</a></div></footer>
+</body>
+</html>

@@ -1,0 +1,87 @@
+name: Revisión editorial diaria
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: editorial-daily
+  cancel-in-progress: false
+
+jobs:
+  prepare-review:
+    if: vars.EDITORIAL_LEGACY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Probar pipeline editorial
+        working-directory: worker
+        run: npm test
+      - name: Buscar candidatos
+        working-directory: worker
+        run: npm run editorial
+        env:
+          EDITORIAL_MODE: review
+      - name: Preparar revisión
+        working-directory: worker
+        run: npm run editorial:prepare-pr
+        env:
+          EDITORIAL_AI_PROVIDER: ${{ vars.EDITORIAL_AI_PROVIDER || 'none' }}
+          EDITORIAL_AI_API_KEY: ${{ secrets.EDITORIAL_AI_API_KEY }}
+          EDITORIAL_AI_BASE_URL: ${{ vars.EDITORIAL_AI_BASE_URL }}
+          EDITORIAL_AI_MODEL: ${{ vars.EDITORIAL_AI_MODEL }}
+      - name: Leer metadatos
+        id: meta
+        shell: bash
+        run: |
+          if [[ ! -f .github/editorial/pr-meta.json ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "branch=$(node -p "require('./.github/editorial/pr-meta.json').branch")" >> "$GITHUB_OUTPUT"
+          echo "title=$(node -p "require('./.github/editorial/pr-meta.json').title")" >> "$GITHUB_OUTPUT"
+      - name: Crear o actualizar PR de revisión
+        if: steps.meta.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.meta.outputs.branch }}
+          PR_TITLE: ${{ steps.meta.outputs.title }}
+        shell: bash
+        run: |
+          PR_STATE=$(gh pr list --head "$BRANCH" --state all --json state --jq '.[0].state // ""')
+          if [[ "$PR_STATE" == "MERGED" || "$PR_STATE" == "CLOSED" ]]; then
+            echo "El candidato ya tuvo un PR cerrado: $BRANCH"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ "$PR_STATE" == "OPEN" ]]; then git fetch origin "$BRANCH"; fi
+          git switch -C "$BRANCH"
+          git add .github/editorial
+          if git diff --cached --quiet; then
+            echo "El PR abierto ya está actualizado."
+            exit 0
+          fi
+          git commit -m "chore: preparar revisión editorial"
+
+          if [[ "$PR_STATE" == "OPEN" ]]; then
+            git push --force-with-lease origin "$BRANCH"
+          else
+            git push -u origin "$BRANCH"
+            gh pr create --base main --head "$BRANCH" --title "$PR_TITLE" --body-file .github/editorial/pr-body.md
+          fi

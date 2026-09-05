@@ -2,3 +2,11 @@
 Thumbs.db
 .wrangler
 worker/.dev.vars
+
+node_modules/
+dist/
+.build-staging/
+.env
+.env.*
+!.env.example
+content/articles/.generation-lock/

@@ -1,0 +1,61 @@
+name: Artículos con revisión
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 7 * * 1'
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: editorial-articles
+  cancel-in-progress: false
+jobs:
+  generate:
+    if: github.event_name == 'workflow_dispatch' || vars.EDITORIAL_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Excluir temas con PR abierto, cerrado o fusionado
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=all&per_page=100" --jq '.[].head.ref' > /tmp/editorial-branches
+          git ls-remote --heads origin 'refs/heads/editorial/article-*' | cut -f2 | sed 's@refs/heads/@@' >> /tmp/editorial-branches
+          node -e "const fs=require('fs');const ids=fs.readFileSync('/tmp/editorial-branches','utf8').split('\n').filter(v=>v.startsWith('editorial/article-')).map(v=>v.slice('editorial/article-'.length));fs.appendFileSync(process.env.GITHUB_ENV,'EDITORIAL_SKIP_IDS='+JSON.stringify(ids)+'\n')"
+      - name: Elegir un tema sin consumir IA
+        id: plan
+        run: npm run editorial:plan
+      - name: Generar un artículo
+        if: steps.plan.outputs.topic != ''
+        run: npm run editorial:generate
+        env:
+          EDITORIAL_AI_API_KEY: ${{ secrets.EDITORIAL_AI_API_KEY }}
+          EDITORIAL_AI_BASE_URL: ${{ vars.EDITORIAL_AI_BASE_URL }}
+          EDITORIAL_AI_MODEL: ${{ vars.EDITORIAL_AI_MODEL }}
+      - name: Validar y construir preview
+        if: steps.plan.outputs.topic != ''
+        run: npm run build:preview
+      - uses: actions/upload-artifact@v4
+        if: steps.plan.outputs.topic != ''
+        with:
+          name: editorial-preview
+          path: dist
+          retention-days: 14
+      - name: Abrir PR de revisión
+        if: steps.plan.outputs.topic != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOPIC: ${{ steps.plan.outputs.topic }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "editorial/article-$TOPIC"
+          git add content/articles
+          git commit -m "content: borrador para revisión de $TOPIC"
+          git push origin "editorial/article-$TOPIC"
+          gh pr create --base "$GITHUB_REF_NAME" --head "editorial/article-$TOPIC" --title "Editorial: $TOPIC" --body-file docs/ARTICLE-REVIEW.md
