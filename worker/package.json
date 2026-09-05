@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "sanity:miteco": "node scripts/miteco-sanity.mjs"
+    "sanity:miteco": "node scripts/miteco-sanity.mjs",
+    "editorial": "node scripts/editorial-daily.mjs",
+    "editorial:prepare-pr": "node scripts/prepare-editorial-pr.mjs"
   }
 }

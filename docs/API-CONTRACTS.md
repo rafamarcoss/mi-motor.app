@@ -7,7 +7,7 @@ Estos contratos se sirven bajo `/api/` desde un runtime serverless. El frontend 
 `POST /api/trip`
 
 ```json
-{"vehicle":"Opel Astra H GTC 2010 1.9 CDTI 120 CV","origin":"Córdoba","destination":"Chipiona","drivingMode":"normal","advanced":{}}
+{"vehicle":{"make":"Opel","model":"Astra","generation":"H GTC","year":2010,"engine":"1.9 CDTI 120 CV","powerCv":120},"origin":"Córdoba","destination":"Chipiona","drivingMode":"normal","advanced":{}}
 ```
 
 La respuesta compone la ficha del vehículo, la ruta, el precio de combustible, el consumo ajustado, el coste y el uso de IA. Los valores del ejemplo son una lectura puntual del dataset MITECO y cambian con cada actualización:
@@ -19,6 +19,18 @@ La respuesta compone la ficha del vehículo, la ruta, el precio de combustible, 
 El Worker geocodifica, valida el país, limita longitud y cachea por origen/destino normalizados. El cliente no llama a proveedores externos.
 
 En runtime, `route`, `vehicle` y `fuel` incluyen `cached: false` en un miss y `cached: true` en un hit. Es metadata de observabilidad y no cambia la matemática.
+
+## Vehículos
+
+`GET /api/vehicle/search?make=Opel&model=Astra` consulta exclusivamente el catálogo local. Es gratuito y nunca llama a IA.
+
+`POST /api/vehicle/resolve` acepta una capacidad cerrada:
+
+```json
+{"vehicle":{"make":"Opel","model":"Astra","year":2010,"engine":"1.9 CDTI 120 CV"}}
+```
+
+El orden es catálogo local → caché KV → normalización auxiliar. Solo el último paso puede generar coste de IA y está sujeto a rate limit. No existen endpoints públicos `/chat`, `/ask`, `/completion` ni equivalentes.
 
 ## Providers internos
 

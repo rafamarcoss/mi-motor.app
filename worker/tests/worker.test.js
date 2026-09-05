@@ -37,6 +37,17 @@ test('construye un viaje con vehículo conocido sin llamar a IA', async () => {
   assert.equal(result.usage.remainingAiCalculations, null);
 });
 
+test('acepta un vehículo estructurado y lo resuelve por catálogo', async () => {
+  let aiCalls = 0;
+  const result = await buildTrip({
+    vehicle: { make: 'Opel', model: 'Astra', generation: 'H GTC', year: 2010, engine: '1.9 CDTI 120 CV', powerCv: 120 },
+    origin: 'Córdoba', destination: 'Chipiona', drivingMode: 'normal', advanced: {}
+  }, { store: new MemoryStore(), providers: providers({ normalizeVehicle: async () => { aiCalls += 1; } }), env: {} });
+  assert.equal(result.vehicle.source, 'local-catalog');
+  assert.equal(result.vehicle.tankLiters, 52);
+  assert.equal(aiCalls, 0);
+});
+
 test('rechaza payload inválido antes de tocar proveedores', async () => {
   await assert.rejects(
     () => buildTrip({ vehicle: 'coche', origin: '', destination: 'Madrid' }, { providers: providers(), env: {} }),
@@ -97,6 +108,17 @@ test('cachea una normalización IA y no consume cuota en la segunda consulta', a
   assert.equal(first.fuel.cached, false);
   assert.equal(second.fuel.cached, true);
   assert.equal(second.usage.remainingAiCalculations, 2);
+});
+
+test('cambiar parámetros del viaje no vuelve a resolver el vehículo con IA', async () => {
+  let calls = 0;
+  const ai = { async normalizeVehicle(input) { calls += 1; return new MockAIProvider({ make: 'Seat', model: 'León', generation: 'III', year: 2018, engine: '1.5 TSI', fuel: 'gasoline', powerCv: 150, powerKw: 110, referenceConsumption: 6.4 }).normalizeVehicle(input); } };
+  const store = new MemoryStore();
+  const env = { DEEPSEEK_API_KEY: 'configured-for-test', RATE_LIMIT_SECRET: 'test-secret' };
+  const base = { vehicle: { make: 'Seat', model: 'León', year: 2018, engine: '1.5 TSI 150 CV' }, origin: 'Córdoba', destination: 'Chipiona' };
+  await buildTrip({ ...base, drivingMode: 'normal', advanced: { ac: 'apagado', load: 'normal' } }, { store, providers: providers(ai), env });
+  await buildTrip({ ...base, drivingMode: 'dinamico', advanced: { ac: 'intenso', load: 'cargado', highwaySpeed: 120 } }, { store, providers: providers(ai), env });
+  assert.equal(calls, 1);
 });
 
 test('un vehículo cacheado sigue funcionando aunque la cuota IA esté agotada', async () => {
@@ -210,4 +232,12 @@ test('health y CORS responden sin proveedores externos', async () => {
 
   const forbidden = await worker.fetch(new Request('https://api.mi-motor.app/health', { headers: { Origin: 'https://otro.example' } }), { ALLOWED_ORIGIN: 'https://mi-motor.app' });
   assert.equal(forbidden.status, 403);
+});
+
+test('expone búsqueda cerrada de catálogo sin coste IA', async () => {
+  const response = await worker.fetch(new Request('https://api.mi-motor.app/api/vehicle/search?make=Opel&model=Astra'), {});
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(body.cost, 'free');
+  assert.equal(body.vehicles[0].referenceConsumption, 6.1);
 });
