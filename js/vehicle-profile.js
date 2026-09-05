@@ -1,141 +1,55 @@
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
-  } else {
-    root.MiMotorProfile = factory();
-  }
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.MiMotorVehicle = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  var STORAGE_KEY = 'mimotor.vehicle';
-  var FUELS = ['diesel', 'gasoline', 'hybrid', 'electric', 'unknown'];
-  var ALLOWED_KEYS = [
-    'make', 'model', 'generation', 'year', 'engine', 'fuel',
-    'referenceConsumption', 'customConsumption', 'updatedAt'
-  ];
-  var MAX_STRING = 48;
-  var MAX_CONSUMPTION = 40;
+  var STORAGE_KEY = 'mimotor.vehicle.v1';
+  var ALLOWED_FUELS = ['diesel', 'gasoline', 'hybrid', 'electric', 'lpg', 'cng'];
+  var CATALOG = Object.freeze([
+    Object.freeze({ make: 'Opel', model: 'Astra', generation: 'H GTC', year: 2010, engine: '1.9 CDTI 120 CV', fuel: 'diesel', displacementCc: 1910, powerCv: 120, referenceConsumption: 6.1, urbanConsumption: 7.8, roadConsumption: 5.1, tankLiters: 52, source: 'local-catalog', confidence: 0.96 })
+  ]);
 
-  var storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
-
-  function setStorage(adapter) {
-    storage = adapter;
+  function text(value) { return String(value == null ? '' : value).trim().slice(0, 80); }
+  function normalise(value) { return text(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+  function unique(values) { return values.filter(function (value, index) { return values.indexOf(value) === index; }); }
+  function search(filters) {
+    filters = filters || {};
+    return CATALOG.filter(function (vehicle) {
+      return (!filters.make || normalise(vehicle.make) === normalise(filters.make))
+        && (!filters.model || normalise(vehicle.model) === normalise(filters.model))
+        && (!filters.year || Number(vehicle.year) === Number(filters.year))
+        && (!filters.engine || normalise(vehicle.engine).includes(normalise(filters.engine)));
+    }).map(function (vehicle) { return Object.assign({}, vehicle); });
   }
-
-  var FUEL_LABELS = {
-    diesel: 'Diésel',
-    gasoline: 'Gasolina',
-    hybrid: 'Híbrido',
-    electric: 'Eléctrico',
-    unknown: ''
-  };
-
-  function cleanString(value) {
-    if (typeof value !== 'string') return null;
-    var text = value.trim().slice(0, MAX_STRING);
-    return text.length > 0 ? text : null;
+  function options(filters) {
+    var matches = search(filters);
+    return { makes: unique(CATALOG.map(function (vehicle) { return vehicle.make; })), models: unique(matches.map(function (vehicle) { return vehicle.model; })), years: unique(matches.map(function (vehicle) { return vehicle.year; })).sort().reverse(), engines: unique(matches.map(function (vehicle) { return vehicle.engine; })) };
   }
-
-  function cleanYear(value) {
-    var year = Number(value);
-    return Number.isInteger(year) && year >= 1900 && year <= 2100 ? year : null;
-  }
-
-  function cleanConsumption(value) {
-    var number = Number(String(value).replace(/\s/g, '').replace(',', '.'));
-    return Number.isFinite(number) && number > 0 && number <= MAX_CONSUMPTION
-      ? Math.round(number * 100) / 100
-      : null;
-  }
-
-  function sanitize(raw) {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-
-    var out = {};
-    var make = cleanString(raw.make);
-    var model = cleanString(raw.model);
-    var engine = cleanString(raw.engine);
-    var generation = cleanString(raw.generation);
-    var year = cleanYear(raw.year);
-    var referenceConsumption = cleanConsumption(raw.referenceConsumption);
-    var customConsumption = cleanConsumption(raw.customConsumption);
-    var fuel = FUELS.indexOf(raw.fuel) >= 0 ? raw.fuel : null;
-
-    if (!make || !model || !year || !engine || !fuel || !referenceConsumption) return null;
-
-    out.make = make;
-    out.model = model;
-    out.year = year;
-    out.engine = engine;
-    out.fuel = fuel;
-    out.referenceConsumption = referenceConsumption;
-    if (generation) out.generation = generation;
-    if (customConsumption !== null) out.customConsumption = customConsumption;
-    out.updatedAt = typeof raw.updatedAt === 'string'
-      ? raw.updatedAt.slice(0, 24)
-      : new Date().toISOString();
-    return out;
-  }
-
-  function load() {
-    if (!storage) return null;
-    try {
-      var raw = storage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      return sanitize(JSON.parse(raw));
-    } catch (error) {
-      return null;
+  function resolveLocal(input) { return search(input)[0] || null; }
+  function validate(input) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+    for (var key of ['customConsumption', 'powerCv', 'tankLiters', 'confidence']) {
+      if (input[key] !== undefined && input[key] !== null && input[key] !== '' && !Number.isFinite(Number(input[key]))) return null;
     }
-  }
-
-  function save(profile) {
-    var clean = sanitize(profile);
-    if (!clean || !storage) return false;
-    try {
-      storage.setItem(STORAGE_KEY, JSON.stringify(clean));
-      return true;
-    } catch (error) {
-      return false;
+    var profile = {
+      make: text(input.make), model: text(input.model), generation: text(input.generation), year: Number(input.year), engine: text(input.engine), fuel: text(input.fuel).toLowerCase(),
+      referenceConsumption: Number(input.referenceConsumption), customConsumption: Number(input.customConsumption) || null, powerCv: Number(input.powerCv) || null,
+      tankLiters: Number(input.tankLiters) || null, source: text(input.source) || 'user', confidence: Number(input.confidence) || null
+    };
+    if (!profile.make || !profile.model || !Number.isInteger(profile.year) || profile.year < 1900 || profile.year > new Date().getFullYear() + 1) return null;
+    if (!profile.engine || ALLOWED_FUELS.indexOf(profile.fuel) === -1) return null;
+    if (!Number.isFinite(profile.referenceConsumption) || profile.referenceConsumption <= 0 || profile.referenceConsumption > 40) return null;
+    for (var pair of [['customConsumption', 40], ['powerCv', 2000], ['tankLiters', 200], ['confidence', 1]]) {
+      var n = profile[pair[0]];
+      if (n !== null && (!Number.isFinite(n) || n <= 0 || n > pair[1])) return null;
     }
+    return profile;
   }
-
-  function clear() {
-    if (!storage) return;
-    try { storage.removeItem(STORAGE_KEY); } catch (error) { /* sin acceso */ }
-  }
-
-  function name(profile) {
-    if (!profile) return '';
-    return [profile.make, profile.model, profile.generation].filter(Boolean).join(' ');
-  }
-
-  function spec(profile) {
-    if (!profile) return '';
-    var fuelLabel = FUEL_LABELS[profile.fuel] || '';
-    return [profile.engine, profile.year, fuelLabel].filter(Boolean).join(' · ');
-  }
-
-  function describe(profile) {
-    if (!profile) return '';
-    return (name(profile) + ' · ' + spec(profile)).replace(/^ · | · $/g, '');
-  }
-
-  function fuelLabel(fuel) {
-    return FUEL_LABELS[fuel] || '';
-  }
-
-  return {
-    sanitize: sanitize,
-    load: load,
-    save: save,
-    clear: clear,
-    setStorage: setStorage,
-    name: name,
-    spec: spec,
-    describe: describe,
-    fuelLabel: fuelLabel,
-    STORAGE_KEY: STORAGE_KEY,
-    ALLOWED_KEYS: ALLOWED_KEYS,
-    FUELS: FUELS
-  };
+  function save(input, storage) { var profile = validate(input); if (!profile) return false; try { (storage || localStorage).setItem(STORAGE_KEY, JSON.stringify(profile)); return true; } catch { return false; } }
+  function load(storage) { try { return validate(JSON.parse((storage || localStorage).getItem(STORAGE_KEY))); } catch { return null; } }
+  function remove(storage) { try { (storage || localStorage).removeItem(STORAGE_KEY); return true; } catch { return false; } }
+  function label(vehicle) { return [vehicle.make, vehicle.model, vehicle.generation, vehicle.year, vehicle.engine].filter(Boolean).join(' · '); }
+  function fuelLabel(fuel) { return ({ diesel: 'Diésel', gasoline: 'Gasolina', hybrid: 'Híbrido', electric: 'Eléctrico', lpg: 'GLP', cng: 'GNC' })[fuel] || fuel; }
+  return { catalog: CATALOG, search: search, options: options, resolveLocal: resolveLocal, validate: validate, save: save, load: load, remove: remove, label: label, fuelLabel: fuelLabel, storageKey: STORAGE_KEY };
 });

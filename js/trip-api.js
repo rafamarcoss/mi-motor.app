@@ -20,7 +20,8 @@
       response = await fetchImpl(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(30000)
       });
     } catch (error) {
       throw new ApiError('NETWORK_ERROR', 'No se pudo conectar con el backend de MiMotor.', 0, error);

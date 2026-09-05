@@ -2,8 +2,8 @@ import { calculateConsumption, calculateCost } from './consumption.js';
 import { DeepSeekProvider, UnavailableAIProvider } from './ai.js';
 import { createStore, MemoryStore } from './store.js';
 import { AiRateLimiter } from './rate-limit.js';
-import { validateTripPayload } from './validation.js';
-import { validateVehicle, resolveKnownVehicle } from './vehicle.js';
+import { validateTripPayload, validateVehicleInput } from './validation.js';
+import { validateVehicle, resolveKnownVehicle, searchKnownVehicles } from './vehicle.js';
 import { fuelTypeForVehicle, MitecoFuelPriceProvider } from './fuel.js';
 import { OpenRouteServiceProvider, UnavailableRoutingProvider, routeCacheKey } from './routing.js';
 
@@ -14,8 +14,27 @@ export default {
     const cors = corsHeaders(request, env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (!isAllowedOrigin(request, env)) return json({ error: { code: 'CORS_FORBIDDEN', message: 'Origen no permitido.' } }, 403, cors);
-    if (new URL(request.url).pathname === '/health') return json({ ok: true, service: 'mimotor-api' }, 200, cors);
-    if (new URL(request.url).pathname !== '/api/trip') return json({ error: { code: 'NOT_FOUND', message: 'Endpoint no encontrado.' } }, 404, cors);
+    const url = new URL(request.url);
+    if (request.method === 'POST' && ['/api/trip', '/api/vehicle/resolve'].includes(url.pathname)) {
+      try { request = await boundedRequest(request); }
+      catch (error) { return json({ error: { code: 'PAYLOAD_TOO_LARGE', message: 'La petición supera 20000 bytes.' } }, 413, cors); }
+    }
+    if (url.pathname === '/health') return json({ ok: true, service: 'mimotor-api' }, 200, cors);
+    if (url.pathname === '/api/vehicle/search' && request.method === 'GET') {
+      const filters = Object.fromEntries(['make', 'model', 'year', 'engine'].map((key) => [key, url.searchParams.get(key)]).filter(([, value]) => value));
+      return json({ vehicles: searchKnownVehicles(filters), cost: 'free' }, 200, cors);
+    }
+    if (url.pathname === '/api/vehicle/resolve' && request.method === 'POST') {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: { code: 'INVALID_JSON', message: 'El cuerpo no es JSON válido.' } }, 400, cors); }
+      const validation = validateVehicleInput(body?.vehicle);
+      if (!validation.ok) return json({ error: { code: 'INVALID_INPUT', message: validation.error } }, 422, cors);
+      try {
+        const vehicle = await buildVehicle(validation.value, { env, request, store: createStore(env), persistentStore: Boolean(env.MIMOTOR_KV), providers: createProviders(env) });
+        return json({ vehicle, mayUseAi: vehicle.source !== 'local-catalog' && !vehicle.cached }, 200, cors);
+      } catch (error) { return json({ error: { code: error.code || 'VEHICLE_ERROR', message: error.message }, ...(error.details || {}) }, error.status || 500, cors); }
+    }
+    if (url.pathname !== '/api/trip') return json({ error: { code: 'NOT_FOUND', message: 'Endpoint no encontrado.' } }, 404, cors);
     if (request.method !== 'POST') return json({ error: { code: 'METHOD_NOT_ALLOWED', message: 'Usa POST.' } }, 405, cors);
 
     const contentLength = Number(request.headers.get('content-length') || 0);
@@ -65,13 +84,7 @@ export async function buildTrip(payload, { env = {}, request = new Request('http
     drivingMode: input.drivingMode,
     advanced: input.advanced
   });
-  const usedPrice = Number.isFinite(input.advanced?.fuelPrice) ? input.advanced.fuelPrice : fuel.averagePrice;
-  const cost = calculateCost({
-    distanceKm: route.distanceKm,
-    consumption,
-    fuelPrice: usedPrice,
-    advanced: input.advanced
-  });
+  const cost = calculateCost({ distanceKm: route.distanceKm, consumption, fuelPrice: fuel.averagePrice });
   const rateLimiter = new AiRateLimiter({ store, secret: env.RATE_LIMIT_SECRET });
 
   return {
@@ -79,17 +92,21 @@ export async function buildTrip(payload, { env = {}, request = new Request('http
     vehicle: vehicleResult,
     consumption,
     fuel,
-    price: { used: usedPrice, source: Number.isFinite(input.advanced?.fuelPrice) ? 'manual' : fuel.source },
     cost,
     usage: { remainingAiCalculations: await rateLimiter.remaining(request) }
   };
+}
+
+export async function buildVehicle(input, { env = {}, request = new Request('https://mi-motor.app/api/vehicle/resolve'), store = new MemoryStore(), persistentStore = true, providers = createProviders(env) } = {}) {
+  return resolveVehicle(input, { env, request, store, persistentStore, providers });
 }
 
 async function resolveVehicle(input, { env, request, store, persistentStore, providers }) {
   const known = resolveKnownVehicle(input);
   if (known) return known;
 
-  const inputKey = `vehicle-input:${input.toLowerCase().replace(/\s+/g, '-')}`;
+  const inputText = typeof input === 'string' ? input : [input.make, input.model, input.generation, input.year, input.engine, input.powerCv].filter(Boolean).join(' ');
+  const inputKey = `vehicle-input:${inputText.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   const cached = await store.get(inputKey);
   if (cached) return { ...cached, cached: true };
   if (!env.DEEPSEEK_API_KEY) throw new ApiError('VEHICLE_NEEDS_PRECISION', 'No se pudo identificar la motorización sin una fuente configurada.', 422);
@@ -105,7 +122,7 @@ async function resolveVehicle(input, { env, request, store, persistentStore, pro
     });
   }
 
-  const resolved = validateVehicle(await providers.ai.normalizeVehicle(input));
+  const resolved = validateVehicle(await providers.ai.normalizeVehicle(inputText));
   if (!resolved || (resolved.confidence !== undefined && Number(resolved.confidence) < 0.55)) {
     throw new ApiError('VEHICLE_AMBIGUOUS', 'Necesitamos precisar año y motorización para estimar el consumo.', 422);
   }
@@ -158,7 +175,7 @@ function corsHeaders(request, env) {
   const origin = request.headers.get('Origin');
   const allowed = env.ALLOWED_ORIGIN || 'https://mi-motor.app';
   const headers = {
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     Vary: 'Origin'
   };
@@ -180,4 +197,19 @@ class ApiError extends Error {
     this.status = status;
     this.details = details;
   }
+}
+
+async function boundedRequest(request) {
+  if (Number(request.headers.get('content-length') || 0) > 20000) throw new Error('size');
+  if (!request.body) return request;
+  const reader = request.body.getReader(); const chunks = []; let size = 0;
+  while (true) {
+    const { value, done } = await reader.read(); if (done) break;
+    size += value.byteLength;
+    if (size > 20000) { await reader.cancel(); throw new Error('size'); }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return new Request(request.url, { method: request.method, headers: request.headers, body: bytes });
 }

@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://mi-motor.app/</loc>
-  </url>
+<url><loc>https://mi-motor.app/</loc></url>
+<url><loc>https://mi-motor.app/actualidad/</loc></url>
+<url><loc>https://mi-motor.app/guias/</loc></url>
+<url><loc>https://mi-motor.app/guias/como-calcular-consumo-real/</loc></url>
+<url><loc>https://mi-motor.app/guias/entender-factura-taller-con-ia/</loc></url>
+<url><loc>https://mi-motor.app/herramientas/</loc></url>
+<url><loc>https://mi-motor.app/herramientas/consumo-real/</loc></url>
+<url><loc>https://mi-motor.app/herramientas/coste-mensual-coche/</loc></url>
+<url><loc>https://mi-motor.app/herramientas/coste-viaje/</loc></url>
+<url><loc>https://mi-motor.app/herramientas/gasolina-o-diesel/</loc></url>
+<url><loc>https://mi-motor.app/herramientas/presion-neumaticos/</loc></url>
+<url><loc>https://mi-motor.app/ia-y-coche/</loc></url>
+<url><loc>https://mi-motor.app/tu-coche/</loc></url>
 </urlset>

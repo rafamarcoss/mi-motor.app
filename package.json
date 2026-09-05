@@ -1,0 +1,13 @@
+{
+  "name": "mi-motor",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js && npm --prefix worker test",
+    "build": "node scripts/build.mjs",
+    "build:preview": "node scripts/build.mjs --preview",
+    "editorial:plan": "node scripts/editorial.mjs --dry-run",
+    "editorial:generate": "node scripts/editorial.mjs",
+    "validate": "node scripts/validate-site.mjs"
+  },
+  "engines": { "node": ">=22" }
+}

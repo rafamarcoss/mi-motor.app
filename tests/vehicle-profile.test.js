@@ -1,83 +1,39 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Profile = require('../js/vehicle-profile.js');
+const vehicle = require('../js/vehicle-profile.js');
 
 function memoryStorage() {
   const values = new Map();
-  return {
-    getItem: (key) => (values.has(key) ? values.get(key) : null),
-    setItem: (key, value) => values.set(key, String(value)),
-    removeItem: (key) => values.delete(key)
-  };
+  return { setItem(key, value) { values.set(key, value); }, getItem(key) { return values.get(key) || null; }, removeItem(key) { values.delete(key); }, values };
 }
 
-const VALID_PROFILE = {
-  make: 'Opel',
-  model: 'Astra',
-  generation: 'H GTC',
-  year: 2010,
-  engine: '1.9 CDTI 120 CV',
-  fuel: 'diesel',
-  referenceConsumption: 6.1,
-  customConsumption: null
-};
-
-test('sanitiza un perfil válido y descarta claves ajenas', () => {
-  const clean = Profile.sanitize({ ...VALID_PROFILE, email: 'yo@test.es', plate: '1234ABC' });
-  assert.equal(clean.make, 'Opel');
-  assert.equal(clean.year, 2010);
-  assert.equal('email' in clean, false);
-  assert.equal('plate' in clean, false);
+test('resuelve Opel Astra desde catálogo sin proveedor externo', () => {
+  const result = vehicle.resolveLocal({ make: 'Opel', model: 'Astra', year: 2010, engine: '1.9 CDTI' });
+  assert.equal(result.generation, 'H GTC');
+  assert.equal(result.referenceConsumption, 6.1);
+  assert.equal(result.source, 'local-catalog');
 });
 
-test('lista blanca: solo claves permitidas', () => {
-  const clean = Profile.sanitize(VALID_PROFILE);
-  Object.keys(clean).forEach((key) => {
-    assert.ok(Profile.ALLOWED_KEYS.includes(key), key);
-  });
+test('el selector deriva modelos, años y motores', () => {
+  assert.deepEqual(vehicle.options({ make: 'Opel' }).models, ['Astra']);
+  assert.deepEqual(vehicle.options({ make: 'Opel', model: 'Astra' }).years, [2010]);
 });
 
-test('rechaza perfiles incompletos o inválidos', () => {
-  assert.equal(Profile.sanitize(null), null);
-  assert.equal(Profile.sanitize({ ...VALID_PROFILE, make: '' }), null);
-  assert.equal(Profile.sanitize({ ...VALID_PROFILE, year: 1500 }), null);
-  assert.equal(Profile.sanitize({ ...VALID_PROFILE, fuel: 'kerosene' }), null);
-  assert.equal(Profile.sanitize({ ...VALID_PROFILE, referenceConsumption: 0 }), null);
-});
-
-test('guarda, lee y limpia el perfil de forma segura', () => {
-  Profile.setStorage(memoryStorage());
-  Profile.clear();
-  assert.equal(Profile.load(), null);
-  assert.equal(Profile.save(VALID_PROFILE), true);
-  const loaded = Profile.load();
-  assert.equal(loaded.make, 'Opel');
-  assert.equal(loaded.referenceConsumption, 6.1);
-  assert.equal('email' in loaded, false);
-  Profile.clear();
-  assert.equal(Profile.load(), null);
-});
-
-test('devuelve null si el JSON guardado está corrupto', () => {
+test('localStorage conserva solo el perfil permitido', () => {
   const storage = memoryStorage();
-  Profile.setStorage(storage);
-  storage.setItem(Profile.STORAGE_KEY, '{no-es-json');
-  assert.equal(Profile.load(), null);
-  storage.setItem(Profile.STORAGE_KEY, JSON.stringify({ make: 'SoloMarca' }));
-  assert.equal(Profile.load(), null);
+  const input = { ...vehicle.catalog[0], customConsumption: 6.7, registration: '1234 ABC', email: 'x@example.com' };
+  assert.equal(vehicle.save(input, storage), true);
+  const raw = storage.values.get(vehicle.storageKey);
+  assert.doesNotMatch(raw, /1234 ABC|example\.com/);
+  assert.equal(vehicle.load(storage).customConsumption, 6.7);
 });
 
-test('construye la ficha visible del coche', () => {
-  assert.equal(Profile.describe(VALID_PROFILE), 'Opel Astra H GTC · 1.9 CDTI 120 CV · 2010 · Diésel');
-  assert.equal(Profile.fuelLabel('diesel'), 'Diésel');
-  assert.equal(Profile.fuelLabel('gasoline'), 'Gasolina');
+test('rechaza perfiles incompletos o consumos imposibles', () => {
+  assert.equal(vehicle.validate({ make: 'Opel' }), null);
+  assert.equal(vehicle.validate({ ...vehicle.catalog[0], referenceConsumption: 80 }), null);
 });
 
-test('no persiste datos personales aunque lleguen en el perfil', () => {
-  const storage = memoryStorage();
-  Profile.setStorage(storage);
-  Profile.save({ ...VALID_PROFILE, email: 'x@x.es', plate: 'ABC' });
-  const raw = storage.getItem(Profile.STORAGE_KEY);
-  assert.equal(raw.includes('email'), false);
-  assert.equal(raw.includes('plate'), false);
+test('rechaza consumos personalizados negativos, infinitos y fuera de rango', () => {
+  for (const customConsumption of [-1, 80, Infinity]) assert.equal(vehicle.validate({ ...vehicle.catalog[0], customConsumption }), null);
+  const storage = memoryStorage(); vehicle.save(vehicle.catalog[0], storage); assert.equal(vehicle.remove(storage), true); assert.equal(vehicle.load(storage), null);
 });

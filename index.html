@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MiMotor — Cuánto te cuesta realmente usar tu coche</title>
-<meta name="description" content="Calcula el coste de tus viajes, tu consumo real, el mantenimiento y las averías de tu coche. Herramientas prácticas para dueños de coches.">
+<title>MiMotor — Calculadoras y guías útiles para tu coche</title>
+<meta name="description" content="Calcula viajes, consumo y costes de tu coche. Guarda tu coche y utiliza herramientas de consumo y costes.">
 <link rel="canonical" href="https://mi-motor.app/">
-<meta property="og:title" content="MiMotor — Cuánto te cuesta realmente usar tu coche">
-<meta property="og:description" content="Calcula el coste de tus viajes, tu consumo real, el mantenimiento y las averías de tu coche.">
+<meta property="og:title" content="MiMotor — Calculadoras y guías útiles para tu coche">
+<meta property="og:description" content="Calcula costes y aprende a usar IA con la información de tu coche.">
 <meta property="og:url" content="https://mi-motor.app/">
 <meta property="og:type" content="website">
 <script type="application/ld+json">
@@ -28,6 +28,7 @@
 <script src="js/vehicle-profile.js"></script>
 <script src="js/calculator-core.js"></script>
 <script src="js/trip-api.js"></script>
+<script src="js/trip-ui.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   * { margin: 0; padding: 0; }
@@ -119,7 +120,6 @@
   .field.span3 { grid-column: span 3; }
   .field.span2 { grid-column: span 2; }
   .field label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
-  .field label .light { font-weight: 400; color: #a6a8a1; }
   .field input {
     width: 100%; height: 38px; padding: 0 11px;
     border: 1px solid var(--border); border-radius: 6px;
@@ -142,13 +142,6 @@
   .advanced-fields[open] summary { margin-bottom: 12px; color: var(--text); }
   .advanced-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 14px; }
 
-  .vehicle-editor { grid-column: span 6; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
-  .vehicle-editor summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 500; }
-  .vehicle-editor summary::marker { color: var(--text); }
-  .vehicle-editor[open] summary { margin-bottom: 12px; color: var(--text); }
-  .editor-note { grid-column: span 6; font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .editor-actions { grid-column: span 6; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-
   .calc-actions { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
   .calc-actions .note { font-size: 12.5px; color: var(--muted); }
 
@@ -164,20 +157,15 @@
     border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 3px 8px;
   }
   .res-route { margin-top: 12px; font-size: 13.5px; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums; }
-  .res-line { margin-top: 4px; font-size: 12.5px; color: rgba(255,255,255,0.7); }
-  .res-main { margin-top: 16px; }
+  .res-main { margin-top: 18px; }
   .res-main .k { font-size: 12.5px; color: rgba(255,255,255,0.6); }
   .res-main .v { margin-top: 2px; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.05; }
-  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.14); }
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.14); }
   .res-grid .k { font-size: 12px; color: rgba(255,255,255,0.55); }
   .res-grid .v { margin-top: 3px; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .res-range { margin-top: 14px; font-size: 13px; color: rgba(255,255,255,0.78); }
-  .res-detail { display: grid; gap: 5px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 12.5px; color: rgba(255,255,255,0.72); }
-  .res-detail .row { display: flex; justify-content: space-between; gap: 12px; }
-  .res-detail b { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .res-explanation { margin-top: 12px; font-size: 11.5px; line-height: 1.5; color: rgba(255,255,255,0.52); }
-  .res-explanation .up { display: inline-block; margin-right: 6px; }
-  .res-note { margin-top: auto; padding-top: 12px; font-size: 11.5px; color: rgba(255,255,255,0.45); }
+  .res-note { margin-top: auto; padding-top: 16px; font-size: 11.5px; color: rgba(255,255,255,0.45); }
+  .res-range { margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.78); }
+  .res-explanation { margin-top: 10px; font-size: 11.5px; line-height: 1.45; color: rgba(255,255,255,0.52); }
 
   /* ---------- secciones ---------- */
   .section { border-top: 1px solid var(--border); padding: 38px 0 42px; scroll-margin-top: 70px; }
@@ -292,15 +280,14 @@
 
 <header class="site-header">
   <div class="wrap header-inner">
-    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span>MiMotor</a>
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>MiMotor</a>
     <nav class="main-nav" aria-label="Navegación principal">
-      <a href="#mi-coche">Mi coche</a>
-      <a href="#calculadoras">Calculadoras</a>
-      <a href="#mantenimiento">Mantenimiento</a>
-      <a href="#averias">Averías</a>
-      <a href="#guias">Guías</a>
+      <a href="herramientas/">Herramientas</a>
+      <a href="ia-y-coche/">IA y tu coche</a>
+      <a href="guias/">Guías</a>
+      <a href="actualidad/">Actualidad</a>
     </nav>
-    <a class="btn btn-dark header-cta" href="#editor-coche">Guardar mi coche</a>
+    <a class="btn btn-dark header-cta" href="herramientas/coste-viaje/">Calcular un viaje</a>
   </div>
 </header>
 
@@ -308,138 +295,139 @@
   <!-- HERO + CALCULADORA -->
   <section class="hero">
     <div class="wrap">
-      <h1>¿Cuánto te cuesta realmente usar tu coche?</h1>
-      <p class="hero-sub">Calcula viajes, consumo, mantenimiento y averías desde un mismo sitio.</p>
+      <h1>Calcula cuánto te cuesta realmente un viaje con tu coche</h1>
+      <p class="hero-sub">Indica la distancia, el consumo y el precio de tu viaje. Los valores iniciales son ejemplos. Sin cuenta.</p>
 
-      <div class="calc" id="calculadoras">
+      <div class="calc" id="calculadoras" data-trip-calculator>
         <div class="calc-form">
           <div class="calc-top">
             <span class="calc-label">Calculadora de viaje</span>
-            <span class="car-chip" id="chip-vehiculo">
-              <strong>Opel Astra H GTC</strong><span class="sep">·</span>1.9 CDTI 120 CV · 2010<span class="sep">·</span>Diésel
-              <a class="change" href="#editor-coche">Cambiar</a>
-            </span>
+            <span class="car-chip"><strong>Cálculo privado</strong><span class="sep">·</span>No guardamos la ruta</span>
           </div>
 
-          <details class="vehicle-editor" id="editor-coche">
-            <summary>Tu coche</summary>
-            <div class="advanced-grid">
-              <div class="field span2"><label for="f-marca">Marca</label><input type="text" id="f-marca" value="Opel" maxlength="48"></div>
-              <div class="field span2"><label for="f-modelo">Modelo</label><input type="text" id="f-modelo" value="Astra" maxlength="48"></div>
-              <div class="field span2"><label for="f-generacion">Generación <span class="light">(opcional)</span></label><input type="text" id="f-generacion" value="H GTC" maxlength="48"></div>
-              <div class="field span2"><label for="f-anio">Año</label><input type="text" inputmode="numeric" id="f-anio" value="2010"></div>
-              <div class="field span2"><label for="f-motor">Motor</label><input type="text" id="f-motor" value="1.9 CDTI 120 CV" maxlength="48"></div>
-              <div class="field span2"><label for="f-combustible">Combustible</label>
-                <select id="f-combustible">
-                  <option value="diesel" selected>Diésel</option>
-                  <option value="gasoline">Gasolina</option>
-                  <option value="hybrid">Híbrido</option>
-                  <option value="electric">Eléctrico</option>
-                </select>
-              </div>
-              <div class="field span3"><label for="f-consumo-ref">Consumo de referencia (L/100 km)</label><input type="text" inputmode="decimal" id="f-consumo-ref" value="6,1"></div>
-              <div class="field span3"><label for="f-consumo-custom">Tu consumo real <span class="light">(opcional)</span></label><input type="text" inputmode="decimal" id="f-consumo-custom" placeholder="6,4"></div>
+          <form class="fields" id="trip-form" data-trip-form autocomplete="off">
+            <div class="field span6">
+              <label for="f-vehiculo">Vehículo</label>
+              <input type="text" id="f-vehiculo" data-trip-vehicle value="Opel Astra H GTC · 2010 · 1.9 CDTI" placeholder="Marca, modelo, año y motor">
             </div>
-            <p class="editor-note">Solo se guarda en este navegador el perfil del coche: marca, modelo, año, motor, combustible y consumos. No se guardan matrículas, rutas ni datos personales.</p>
-            <div class="editor-actions">
-              <button type="button" class="btn btn-dark" id="btn-save-coche">Guardar mi coche</button>
-              <span class="note" id="coche-status"></span>
+            <div class="field span3">
+              <label for="f-origen">Origen</label>
+              <input type="text" id="f-origen" data-trip-origin value="Córdoba" placeholder="Ciudad de salida">
             </div>
-          </details>
-
-          <form class="fields" id="trip-form" autocomplete="off">
-            <div class="field span6"><label for="f-origen">De</label><input type="text" id="f-origen" value="Córdoba" placeholder="Ciudad de salida"></div>
-            <div class="field span6"><label for="f-destino">A</label><input type="text" id="f-destino" value="Chipiona" placeholder="Ciudad de llegada"></div>
+            <div class="field span3">
+              <label for="f-destino">Destino</label>
+              <input type="text" id="f-destino" data-trip-destination value="Chipiona" placeholder="Ciudad de llegada">
+            </div>
             <details class="advanced-fields">
-              <summary>Personalizar cálculo</summary>
+              <summary>Ajustar cálculo</summary>
               <div class="advanced-grid">
-                <div class="field span2"><label for="f-viaje">Tipo de viaje</label>
-                  <select id="f-viaje"><option value="ida" selected>Ida</option><option value="vuelta">Ida y vuelta</option></select></div>
-                <div class="field span2"><label for="f-pasajeros">Pasajeros</label>
-                  <select id="f-pasajeros"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
-                <div class="field span2"><label for="f-precio">Precio combustible (€/L) <span class="light">(opcional)</span></label><input type="text" inputmode="decimal" id="f-precio" value="1,49" placeholder="1,49"></div>
-                <div class="field span2"><label for="f-conduccion">Conducción</label>
-                  <select id="f-conduccion"><option value="tranquilo">Tranquila</option><option value="normal" selected>Normal</option><option value="sport">Dinámica</option></select></div>
-                <div class="field span2"><label for="f-clima">Aire acondicionado</label>
-                  <select id="f-clima"><option value="off" selected>Apagado</option><option value="on">Encendido</option></select></div>
-                <div class="field span2"><label for="f-carga">Carga</label>
-                  <select id="f-carga"><option value="light">Ligera</option><option value="normal" selected>Normal</option><option value="heavy">Pesada</option></select></div>
-                <div class="field span2"><label for="f-trafico">Tráfico</label>
-                  <select id="f-trafico"><option value="low" selected>Fluido</option><option value="medium">Medio</option><option value="high">Denso</option></select></div>
-                <div class="field span2"><label for="f-peajes">Peajes (€)</label><input type="text" inputmode="decimal" id="f-peajes" value="" placeholder="0"></div>
-                <div class="field span2"><label for="f-parking">Parking (€)</label><input type="text" inputmode="decimal" id="f-parking" value="" placeholder="0"></div>
-                <div class="field span2"><label for="f-otros">Otros gastos (€)</label><input type="text" inputmode="decimal" id="f-otros" value="" placeholder="0"></div>
-                <div class="field span2"><label for="f-distancia">Distancia manual (km) <span class="light">(sin ruta automática)</span></label><input type="text" inputmode="decimal" id="f-distancia" value="245" placeholder="245"></div>
+                <div class="field span2">
+                  <label for="f-conduccion">Conducción</label>
+                  <select id="f-conduccion" data-trip-driving>
+                    <option value="tranquilo">Tranquila</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="dinamico">Dinámica</option>
+                  </select>
+                </div>
+                <div class="field span2">
+                  <label for="f-trayecto">Trayecto</label>
+                  <select id="f-trayecto" data-trip-type><option value="ida">Solo ida</option><option value="vuelta">Ida y vuelta</option></select>
+                </div>
+                <div class="field span2">
+                  <label for="f-pasajeros">Personas</label>
+                  <input type="number" id="f-pasajeros" data-trip-passengers min="1" max="9" value="1">
+                </div>
+                <div class="field span2">
+                  <label for="f-combustible">Combustible</label>
+                  <select id="f-combustible" data-trip-fuel><option>Gasolina</option><option selected>Diésel</option><option>GLP</option><option>GNC</option></select>
+                </div>
+                <div class="field span2">
+                  <label for="f-distancia">Distancia (km)</label>
+                  <input type="text" inputmode="decimal" id="f-distancia" data-trip-distance value="245" placeholder="165">
+                </div>
+                <div class="field span2">
+                  <label for="f-consumo">Consumo base (L/100 km)</label>
+                  <input type="text" inputmode="decimal" id="f-consumo" data-trip-consumption value="6,1" placeholder="6,1">
+                </div>
+                <div class="field span2">
+                  <label for="f-precio">Precio combustible (€/L)</label>
+                  <input type="text" inputmode="decimal" id="f-precio" data-trip-price value="1,455" placeholder="1,455">
+                </div>
               </div>
             </details>
           </form>
 
           <div class="calc-actions">
-            <button type="button" class="btn btn-lime" id="btn-calc">Calcular mi viaje</button>
-            <span class="note">Estimación orientativa. Personaliza el cálculo si conoces los datos.</span>
+            <button type="submit" form="trip-form" class="btn btn-lime" id="btn-calc" data-trip-submit>Calcular mi viaje</button>
+            <span class="note">Una estimación por pulsación. Ajusta los datos avanzados si los conoces.</span>
           </div>
         </div>
 
         <div class="calc-results" aria-live="polite">
           <div class="res-top">
             <span class="res-label">Resultado estimado</span>
-            <span class="res-chip" id="r-viaje">Ida</span>
+            <span class="res-chip" id="r-trayecto" data-trip-result-type>Solo ida</span>
           </div>
-          <p class="res-route" id="r-ruta">Indica de dónde sales y adónde vas</p>
-          <p class="res-line" id="r-coche">—</p>
+          <p class="res-route" id="r-ruta" data-trip-result-route>Indica origen y destino para empezar</p>
           <div class="res-main">
-            <div class="k">Coste total</div>
-            <div class="v" id="r-total">—</div>
+            <div class="k">Coste combustible</div>
+            <div class="v" id="r-coste" data-trip-result-cost>—</div>
           </div>
           <div class="res-grid">
-            <div><div class="k">Combustible</div><div class="v" id="r-litros">—</div></div>
-            <div><div class="k">Por persona</div><div class="v" id="r-persona">—</div></div>
+            <div>
+              <div class="k">Combustible necesario</div>
+              <div class="v" id="r-litros" data-trip-result-liters>—</div>
+            </div>
+            <div>
+              <div class="k">Coste por 100 km</div>
+              <div class="v" id="r-coste100" data-trip-result-per100>—</div>
+            </div>
+            <div>
+              <div class="k">Coste por persona</div>
+              <div class="v" id="r-persona" data-trip-result-person>—</div>
+            </div>
           </div>
-          <p class="res-range" id="r-rango">Rango probable: —</p>
-          <div class="res-detail" id="r-detalle"></div>
-          <p class="res-explanation" id="r-explicacion">El cálculo aparecerá aquí con una explicación de los datos utilizados.</p>
-          <p class="res-note" id="r-nota">No se envían datos mientras escribes. El cálculo se lanza al pulsar el botón.</p>
+          <p class="res-range" id="r-rango" data-trip-result-range>Rango probable: —</p>
+          <p class="res-explanation" id="r-explicacion" data-trip-result-explanation>El cálculo aparecerá aquí con una explicación de los datos utilizados.</p>
+          <p class="res-note" id="r-nota" data-trip-result-note>Sin llamadas IA ni datos enviados mientras escribes.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- MI COCHE -->
+  <!-- PRIVACIDAD -->
   <section class="section" id="mi-coche">
     <div class="wrap">
-      <p class="overline">Mi coche</p>
-      <h2 id="mc-h2">Opel Astra H GTC</h2>
+      <p class="overline">Privacidad</p>
+      <h2>Tus datos se quedan en tu navegador</h2>
 
       <div class="car-panel">
         <div class="car-id">
-          <div class="name" id="mc-nombre">Opel Astra H GTC</div>
-          <div class="spec" id="mc-especificaciones">1.9 CDTI 120 CV · Diésel · 2010</div>
+          <div class="name">Sin cuenta</div>
+          <div class="spec">No pedimos matrícula ni número de bastidor</div>
           <div class="odo">
-            <div class="k">Kilómetros</div>
-            <div class="v">187.420 km</div>
-            <div class="note">Actualizado con tu último repostaje</div>
+            <div class="k">Herramientas locales</div>
+            <div class="v">100 %</div>
+            <div class="note">Cálculos y personalizaciones ejecutados en el dispositivo</div>
           </div>
         </div>
         <div class="car-stats">
           <div class="stat">
-            <div class="k">Consumo de referencia</div>
-            <div class="v" id="mc-consumo">6,1 L/100 km</div>
-            <div class="note" id="mc-consumo-note">Catálogo MiMotor</div>
+            <div class="k">Documentos</div>
+            <div class="v">No se suben</div>
+            <div class="note">No guardamos tus trayectos ni resultados</div>
           </div>
           <div class="stat">
-            <div class="k">Tu consumo</div>
-            <div class="v" id="mc-consumo-real">—</div>
-            <div class="note" id="mc-consumo-real-note">Indícalo en Tu coche si lo conoces</div>
+            <div class="k">Seguimiento</div>
+            <div class="v">Sin cookies</div>
+            <div class="note">No añadimos analítica invasiva</div>
           </div>
           <div class="stat">
-            <div class="k">Próximo mantenimiento</div>
-            <div class="v">2.580 km</div>
-            <div class="note">Aceite, filtro de aceite y filtro de aire</div>
+            <div class="k">Información sensible</div>
+            <div class="v">Evítala</div>
+            <div class="note">No pedimos matrícula, bastidor, nombre ni email</div>
           </div>
         </div>
-      </div>
-      <div class="calc-actions" style="margin-top: 14px;">
-        <a class="note" href="#editor-coche" style="text-decoration: underline; text-underline-offset: 3px;">Editar mi coche</a>
       </div>
     </div>
   </section>
@@ -448,28 +436,48 @@
   <section class="section" id="herramientas">
     <div class="wrap">
       <p class="overline">Herramientas</p>
-      <h2>Cuatro calculadoras, un solo registro</h2>
+      <h2>Cálculos útiles con tus propios datos</h2>
 
       <div class="tools-grid">
-        <a class="tool no-right no-bottom" href="#calculadoras" id="tool-viaje">
-          <span class="tool-top"><span class="tool-num">01</span><h3>Calcular viaje</h3></span>
+        <a class="tool no-right no-bottom" href="herramientas/coste-viaje/" id="tool-viaje">
+          <div class="tool-top"><span class="tool-num">01</span><h3>Calcular viaje</h3></div>
           <p>Combustible y coste entre dos puntos usando tu consumo real, no el del catálogo.</p>
           <span class="open">Abrir →</span>
         </a>
-        <a class="tool no-bottom" href="#mi-coche" id="tool-consumo">
-          <span class="tool-top"><span class="tool-num">02</span><h3>Consumo real</h3></span>
+        <a class="tool no-bottom" href="herramientas/consumo-real/" id="tool-consumo">
+          <div class="tool-top"><span class="tool-num">02</span><h3>Consumo real</h3></div>
           <p>Apunta cada repostaje y obtén tu consumo medio verdadero, lleno a lleno.</p>
           <span class="open">Abrir →</span>
         </a>
-        <a class="tool no-right" href="#mi-coche" id="mantenimiento">
-          <span class="tool-top"><span class="tool-num">03</span><h3>Mantenimiento</h3></span>
-          <p>Qué le toca a tu coche según los kilómetros: aceite, filtros, correa, frenos.</p>
+        <a class="tool no-right" href="herramientas/coste-mensual-coche/" id="mantenimiento">
+          <div class="tool-top"><span class="tool-num">03</span><h3>Coste mensual</h3></div>
+          <p>Combustible, seguro, impuestos, mantenimiento, ITV y gastos fijos.</p>
           <span class="open">Abrir →</span>
         </a>
-        <a class="tool" href="#guias" id="averias">
-          <span class="tool-top"><span class="tool-num">04</span><h3>Averías</h3></span>
-          <p>Síntomas frecuentes, causas probables y coste orientativo antes de ir al taller.</p>
-          <span class="open">Abrir →</span>
+        <a class="tool" href="herramientas/gasolina-o-diesel/" id="comparador">
+          <div class="tool-top"><span class="tool-num">04</span><h3>Gasolina o diésel</h3></div>
+          <p>Compara compra, consumo y mantenimiento según tus kilómetros.</p>
+          <span class="open">Comparar →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- IA Y TU COCHE -->
+  <section class="section" id="ia-y-coche">
+    <div class="wrap">
+      <p class="overline">IA y tu coche</p>
+      <h2>Comprende documentos y prepara mejores preguntas</h2>
+      <div class="tools-grid">
+        <a class="tool no-right" href="ia-y-coche/">
+          <div class="tool-top"><span class="tool-num">01</span><h3>Ocho usos prácticos</h3></div>
+          <p>Facturas, manuales, ITV, viajes, anuncios y presupuestos. Con límites claros.</p>
+          <span class="open">Ver casos →</span>
+        </a>
+        <a class="tool" href="tu-coche/">
+          <div class="tool-top"><span class="tool-num">02</span><h3>Tu coche en MiMotor</h3></div>
+          <p>Guarda marca, modelo, año, motor y consumo en tu dispositivo para reutilizarlos.</p>
+          <span class="open">Identificar mi coche →</span>
         </a>
       </div>
     </div>
@@ -484,29 +492,39 @@
       <div class="guides-list">
         <article class="guide">
           <span class="num">01</span>
-          <h3><a href="#">Qué significa realmente el consumo de tu coche</a></h3>
+          <h3><a href="guias/como-calcular-consumo-real/">Cómo calcular el consumo real de tu coche</a></h3>
           <span class="meta">Consumo<span class="dot">·</span>6 min</span>
           <p class="excerpt">El dato del catálogo se mide en condiciones que no existen. Esto es lo que deberías mirar.</p>
         </article>
         <article class="guide">
           <span class="num">02</span>
-          <h3><a href="#">Cada cuánto cambiar aceite y filtros</a></h3>
-          <span class="meta">Mantenimiento<span class="dot">·</span>5 min</span>
-          <p class="excerpt">Intervalos realistas según km y tipo de uso, y qué pasa si los estiras demasiado.</p>
+          <h3><a href="guias/entender-factura-taller-con-ia/">Cómo entender una factura del taller con IA</a></h3>
+          <span class="meta">IA y coche<span class="dot">·</span>5 min</span>
+          <p class="excerpt">Qué datos ocultar, qué pedir y cómo verificar cada respuesta.</p>
         </article>
         <article class="guide">
           <span class="num">03</span>
-          <h3><a href="#">Síntomas de una EGR defectuosa</a></h3>
-          <span class="meta">Averías<span class="dot">·</span>7 min</span>
-          <p class="excerpt">Pérdida de potencia, humo, luz de motor: cómo distinguir la EGR de otras averías.</p>
+          <h3><a href="ia-y-coche/">Ocho usos prácticos de IA con tu coche</a></h3>
+          <span class="meta">IA y coche<span class="dot">·</span>7 min</span>
+          <p class="excerpt">Facturas, manuales, ITV, viajes y compra de coches usados.</p>
         </article>
         <article class="guide">
           <span class="num">04</span>
-          <h3><a href="#">Cómo calcular el coste real de un viaje</a></h3>
+          <h3><a href="herramientas/coste-viaje/">Cómo calcular el coste real de un viaje</a></h3>
           <span class="meta">Viajes<span class="dot">·</span>4 min</span>
           <p class="excerpt">La fórmula que usa la calculadora, explicada paso a paso y con ejemplo.</p>
         </article>
       </div>
+    </div>
+  </section>
+
+  <!-- ACTUALIDAD -->
+  <section class="section" id="actualidad">
+    <div class="wrap">
+      <p class="overline">Actualidad</p>
+      <h2>Solo cambios de IA que afectan al conductor</h2>
+      <p class="hero-sub">Navegación, voz, asistentes, coche conectado y análisis de documentos. Los candidatos se revisan antes de publicar.</p>
+      <p class="calc-actions"><a class="btn btn-dark" href="actualidad/">Ver actualidad</a></p>
     </div>
   </section>
 </main>
@@ -521,26 +539,25 @@
       <div class="footer-col">
         <h4>Herramientas</h4>
         <ul>
-          <li><a href="#calculadoras">Calcular viaje</a></li>
-          <li><a href="#mi-coche">Consumo real</a></li>
-          <li><a href="#mantenimiento">Mantenimiento</a></li>
-          <li><a href="#averias">Averías</a></li>
+          <li><a href="herramientas/coste-viaje/">Calcular viaje</a></li>
+          <li><a href="herramientas/consumo-real/">Consumo real</a></li>
+          <li><a href="herramientas/coste-mensual-coche/">Coste mensual</a></li>
+          <li><a href="herramientas/presion-neumaticos/">Presión de neumáticos</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Guías</h4>
         <ul>
-          <li><a href="#guias">El consumo de tu coche</a></li>
-          <li><a href="#guias">Aceite y filtros</a></li>
-          <li><a href="#guias">EGR defectuosa</a></li>
-          <li><a href="#guias">Coste real de un viaje</a></li>
+          <li><a href="guias/como-calcular-consumo-real/">El consumo de tu coche</a></li>
+          <li><a href="guias/entender-factura-taller-con-ia/">Factura del taller con IA</a></li>
+          <li><a href="ia-y-coche/">IA y tu coche</a></li>
+          <li><a href="actualidad/">Actualidad</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Legal</h4>
         <ul>
-          <li><a href="#">Privacidad</a></li>
-          <li><a href="#">Contacto</a></li>
+          <li><a href="#mi-coche">Privacidad</a></li>
         </ul>
       </div>
     </div>
@@ -551,298 +568,5 @@
   </div>
 </footer>
 
-<script>
-(function () {
-  'use strict';
-  var Profile = window.MiMotorProfile;
-  var Calculator = window.MiMotorCalculator;
-  var Api = window.MiMotorTripApi;
-
-  function $(id) { return document.getElementById(id); }
-  function fmt(n, dec) { return n.toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
-  function money(n) { return fmt(n, 2) + ' €'; }
-  function esc(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
-    });
-  }
-
-  var els = {
-    chip: $('chip-vehiculo'),
-    marca: $('f-marca'), modelo: $('f-modelo'), generacion: $('f-generacion'), anio: $('f-anio'),
-    motor: $('f-motor'), combustible: $('f-combustible'),
-    consumoRef: $('f-consumo-ref'), consumoCustom: $('f-consumo-custom'),
-    saveCoche: $('btn-save-coche'), cocheStatus: $('coche-status'),
-    origen: $('f-origen'), destino: $('f-destino'),
-    viaje: $('f-viaje'), pasajeros: $('f-pasajeros'), precio: $('f-precio'),
-    conduccion: $('f-conduccion'), clima: $('f-clima'), carga: $('f-carga'), trafico: $('f-trafico'),
-    peajes: $('f-peajes'), parking: $('f-parking'), otros: $('f-otros'), distancia: $('f-distancia'),
-    btnCalc: $('btn-calc'),
-    rViaje: $('r-viaje'), rRuta: $('r-ruta'), rCoche: $('r-coche'), rTotal: $('r-total'),
-    rLitros: $('r-litros'), rPersona: $('r-persona'), rRango: $('r-rango'), rDetalle: $('r-detalle'),
-    rExpl: $('r-explicacion'), rNota: $('r-nota'),
-    mcH2: $('mc-h2'), mcNombre: $('mc-nombre'), mcSpec: $('mc-especificaciones'),
-    mcConsumo: $('mc-consumo'), mcConsumoNote: $('mc-consumo-note'),
-    mcConsumoReal: $('mc-consumo-real'), mcConsumoRealNote: $('mc-consumo-real-note')
-  };
-
-  var DEFAULT_PROFILE = {
-    make: 'Opel', model: 'Astra', generation: 'H GTC', year: 2010,
-    engine: '1.9 CDTI 120 CV', fuel: 'diesel', referenceConsumption: 6.1, customConsumption: null
-  };
-
-  var currentProfile = Profile.load();
-
-  function fillEditor(p) {
-    els.marca.value = p.make || '';
-    els.modelo.value = p.model || '';
-    els.generacion.value = p.generation || '';
-    els.anio.value = p.year || '';
-    els.motor.value = p.engine || '';
-    els.combustible.value = p.fuel || 'diesel';
-    els.consumoRef.value = p.referenceConsumption != null ? String(p.referenceConsumption).replace('.', ',') : '';
-    els.consumoCustom.value = p.customConsumption != null ? String(p.customConsumption).replace('.', ',') : '';
-  }
-
-  function renderProfile() {
-    var p = currentProfile || DEFAULT_PROFILE;
-    fillEditor(p);
-    els.chip.innerHTML = '<strong>' + esc(Profile.name(p)) + '</strong><span class="sep">·</span>'
-      + esc(p.engine) + ' · ' + p.year + '<span class="sep">·</span>' + esc(Profile.fuelLabel(p.fuel))
-      + ' <a class="change" href="#editor-coche">Cambiar</a>';
-    var nombre = Profile.name(p);
-    els.mcH2.textContent = nombre;
-    els.mcNombre.textContent = nombre;
-    els.mcSpec.textContent = Profile.spec(p);
-    els.mcConsumo.textContent = fmt(p.referenceConsumption, 1) + ' L/100 km';
-    els.mcConsumoNote.textContent = p.customConsumption ? 'Consumo de referencia' : 'Catálogo MiMotor';
-    if (p.customConsumption) {
-      els.mcConsumoReal.textContent = fmt(p.customConsumption, 1) + ' L/100 km';
-      els.mcConsumoRealNote.textContent = 'Tu consumo real, indicado manualmente';
-    } else {
-      els.mcConsumoReal.textContent = '—';
-      els.mcConsumoRealNote.textContent = 'Indícalo en Tu coche si lo conoces';
-    }
-    els.cocheStatus.textContent = currentProfile ? 'Coche guardado en este navegador.' : '';
-  }
-
-  function readEditor() {
-    return {
-      make: els.marca.value, model: els.modelo.value, generation: els.generacion.value,
-      year: els.anio.value, engine: els.motor.value, fuel: els.combustible.value,
-      referenceConsumption: els.consumoRef.value,
-      customConsumption: els.consumoCustom.value.trim() ? els.consumoCustom.value : null
-    };
-  }
-
-  els.saveCoche.addEventListener('click', function () {
-    var clean = Profile.sanitize(readEditor());
-    if (!clean) {
-      els.cocheStatus.textContent = 'Revisa los datos: falta marca, modelo, año, motor, combustible o consumo.';
-      return;
-    }
-    var ok = Profile.save(clean);
-    if (ok) {
-      currentProfile = Profile.load();
-      renderProfile();
-      els.cocheStatus.textContent = 'Coche guardado en este navegador.';
-    } else {
-      els.cocheStatus.textContent = 'No se pudo guardar en este navegador.';
-    }
-  });
-
-  function effectiveProfile() {
-    return currentProfile || DEFAULT_PROFILE;
-  }
-
-  function numberValue(el, fallback) {
-    var value = el.value.trim();
-    return value ? value : fallback;
-  }
-
-  function buildAdjustments(factors, source) {
-    var list = [];
-    if (source === 'manual') {
-      list.push({ label: 'Consumo indicado por ti', percent: 0 });
-    }
-    var definitions = [
-      ['driving', 'Conducción'], ['climate', 'Aire acondicionado'],
-      ['load', 'Carga'], ['traffic', 'Tráfico']
-    ];
-    definitions.forEach(function (pair) {
-      var factor = factors[pair[0]];
-      if (typeof factor === 'number' && factor !== 1) {
-        list.push({ label: pair[1], percent: Math.round((factor - 1) * 100) });
-      }
-    });
-    return list;
-  }
-
-  function localView(result, profile, origin, destination, price, note) {
-    if (!result || !result.valid) {
-      return { valid: false, routeLabel: (origin || 'Origen') + ' → ' + (destination || 'Destino'), note: 'Revisa distancia, consumo y precio en Personalizar cálculo.' };
-    }
-    return {
-      valid: true,
-      routeLabel: origin + ' → ' + destination + ' · ' + fmt(result.distanceKm, 0) + ' km',
-      vehicleLabel: Profile.name(profile),
-      roundTrip: result.roundTrip,
-      consumption: result.consumption,
-      price: price,
-      liters: result.liters,
-      fuelCost: result.cost,
-      extrasTotal: result.extras.total,
-      total: result.total,
-      perPerson: result.perPerson,
-      rangeMin: result.rangeMin,
-      rangeMax: result.rangeMax,
-      adjustments: result.adjustments,
-      note: note
-    };
-  }
-
-  function remoteView(remote, profile) {
-    var route = remote.route;
-    var vehicle = remote.vehicle;
-    var consumption = remote.consumption;
-    var cost = remote.cost;
-    var routeLabel = route.origin + ' → ' + route.destination + ' · ' + fmt(cost.distanceKm, 0) + ' km';
-    if (route.durationMinutes) routeLabel += ' · aprox. ' + fmt(route.durationMinutes, 0) + ' min';
-    var vehicleLabel = [vehicle.make, vehicle.model, vehicle.generation].filter(Boolean).join(' ');
-    var adjustments = buildAdjustments(consumption.factors, consumption.source);
-    var priceSource = remote.price && remote.price.source === 'manual' ? 'precio indicado por ti' : 'precio medio';
-    var note = 'Ruta: ' + route.provider + ' · Carburante: Ministerio · Vehículo: catálogo MiMotor';
-    return {
-      valid: true,
-      routeLabel: routeLabel,
-      vehicleLabel: vehicleLabel,
-      roundTrip: cost.roundTrip,
-      consumption: consumption,
-      price: remote.price ? remote.price.used : remote.fuel.averagePrice,
-      liters: cost.liters,
-      fuelCost: cost.estimated,
-      extrasTotal: cost.extras.total,
-      total: cost.total,
-      perPerson: cost.perPerson,
-      rangeMin: cost.min,
-      rangeMax: cost.max,
-      adjustments: adjustments,
-      note: note + ' · ' + priceSource
-    };
-  }
-
-  function render(view) {
-    if (!view || !view.valid) {
-      els.rRuta.textContent = view ? view.routeLabel : 'Indica de dónde sales y adónde vas';
-      els.rCoche.textContent = '—';
-      els.rTotal.textContent = '—';
-      els.rLitros.textContent = '—';
-      els.rPersona.textContent = '—';
-      els.rRango.textContent = 'Rango probable: —';
-      els.rDetalle.innerHTML = '';
-      els.rExpl.textContent = view ? view.note : 'El cálculo aparecerá aquí con una explicación de los datos utilizados.';
-      return;
-    }
-    els.rViaje.textContent = view.roundTrip ? 'Ida y vuelta' : 'Ida';
-    els.rRuta.textContent = view.routeLabel;
-    els.rCoche.textContent = view.vehicleLabel + ' · ' + fmt(view.consumption.adjusted, 1) + ' L/100 km';
-    els.rTotal.textContent = money(view.total);
-    els.rLitros.textContent = fmt(view.liters, 2) + ' L';
-    els.rPersona.textContent = view.perPerson != null ? money(view.perPerson) : '—';
-    els.rRango.textContent = 'Rango probable: ' + money(view.rangeMin) + ' – ' + money(view.rangeMax);
-
-    var rows = [
-      ['Distancia', fmt(view.distanceKm == null ? view.liters * 100 / view.consumption.adjusted : view.distanceKm, 0) + ' km'],
-      ['Consumo estimado', fmt(view.consumption.adjusted, 1) + ' L/100 km'],
-      ['Precio', fmt(view.price, 3) + ' €/L'],
-      ['Combustible', fmt(view.liters, 2) + ' L'],
-      ['Coste combustible', money(view.fuelCost)],
-      ['Extras (peajes, parking y otros)', money(view.extrasTotal)]
-    ];
-    els.rDetalle.innerHTML = rows.map(function (row) {
-      return '<div class="row"><span>' + row[0] + '</span><b>' + row[1] + '</b></div>';
-    }).join('');
-
-    var explanation = 'Partimos de ' + fmt(view.consumption.base, 1) + ' L/100 km.';
-    if (view.adjustments.length) {
-      explanation += ' Ajustes: ' + view.adjustments.map(function (a) {
-        return a.percent === 0 ? a.label : a.label + (a.percent > 0 ? ' +' : ' ') + a.percent + ' %';
-      }).join(', ') + '.';
-    }
-    explanation += ' Consumo estimado: ' + fmt(view.consumption.adjusted, 1) + ' L/100 km.';
-    els.rExpl.textContent = explanation;
-    els.rNota.textContent = view.note || '';
-  }
-
-  els.btnCalc.addEventListener('click', async function () {
-    var profile = effectiveProfile();
-    var origin = els.origen.value.trim() || 'Origen';
-    var destination = els.destino.value.trim() || 'Destino';
-    var roundTrip = els.viaje.value === 'vuelta';
-    var price = numberValue(els.precio, '1,49');
-
-    var localInput = {
-      distance: els.distancia.value,
-      baseConsumption: profile.referenceConsumption,
-      customConsumption: profile.customConsumption,
-      fuelPrice: price,
-      driving: els.conduccion.value,
-      climate: els.clima.value,
-      load: els.carga.value,
-      traffic: els.trafico.value,
-      roundTrip: roundTrip,
-      passengers: els.pasajeros.value,
-      extras: { tolls: els.peajes.value, parking: els.parking.value, other: els.otros.value }
-    };
-    var local = Calculator.calculateTrip(localInput);
-    var localViewResult = localView(local, profile, origin, destination, Calculator.parseNumber(price), 'Estimación local con tus datos: distancia y precio manuales.');
-
-    if (!Api.isConfigured()) {
-      render(localViewResult);
-      return;
-    }
-
-    var advanced = {
-      climate: els.clima.value,
-      load: els.carga.value,
-      traffic: els.trafico.value,
-      roundTrip: roundTrip,
-      passengers: Number(els.pasajeros.value),
-      tolls: els.peajes.value.trim() ? els.peajes.value : undefined,
-      parking: els.parking.value.trim() ? els.parking.value : undefined,
-      other: els.otros.value.trim() ? els.otros.value : undefined,
-      customConsumption: profile.customConsumption || undefined,
-      fuelPrice: els.precio.value.trim() ? els.precio.value : undefined
-    };
-
-    els.btnCalc.disabled = true;
-    els.btnCalc.setAttribute('aria-busy', 'true');
-    els.rNota.textContent = 'Consultando ruta y carburante…';
-    try {
-      var remote = await Api.calculate({
-        vehicle: Profile.describe(profile),
-        origin: origin,
-        destination: destination,
-        drivingMode: els.conduccion.value,
-        advanced: advanced
-      });
-      if (remote) render(remoteView(remote, profile));
-      else render(localViewResult);
-    } catch (error) {
-      render(localViewResult);
-      els.rNota.textContent = 'No se pudo conectar con el servicio; se usa tu distancia y precio manuales.';
-    } finally {
-      els.btnCalc.disabled = false;
-      els.btnCalc.removeAttribute('aria-busy');
-    }
-
-    if (window.innerWidth < 980) {
-      document.querySelector('.calc-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  });
-
-  renderProfile();
-})();
-</script>
 </body>
 </html>
