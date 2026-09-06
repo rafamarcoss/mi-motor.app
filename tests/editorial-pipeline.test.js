@@ -11,14 +11,16 @@ async function fixture() {
   const day = new Date().toISOString().slice(0, 10);
   const paragraph = 'Este ejemplo sirve para comprobar el reparto del importe que introduces. Anota el combustible consumido, suma los peajes del recorrido y añade el aparcamiento que vayas a compartir. Antes de dividir, acuerda entre cuántas personas se distribuye la suma, incluido el conductor si así lo decidís. Usa el gasto total del recorrido completo y revisa que no hayas contado dos veces la vuelta. La cifra es un presupuesto del ejemplo y se puede corregir cuando tengas los recibos. Si cambia el número de personas, el mismo importe se reparte de nuevo entre los participantes indicados.';
   return {
-    article: { slug: 'repartir-gastos-viaje-coche', topicId: 'repartir-gastos-viaje', intent: 'reparto-gastos-entre-ocupantes', title: 'Cómo repartir los gastos de un viaje entre personas', seoTitle: 'Repartir gastos de un viaje entre personas | MiMotor', description: 'Suma combustible, peajes y aparcamiento y divide el total entre los participantes. Un ejemplo para revisar el presupuesto antes del viaje.', excerpt: 'Un ejemplo de reparto con los importes que has indicado para el viaje.', keyword: 'repartir gastos viaje coche', category: 'costes', market: 'ES', publishedAt: day, updatedAt: day, status: 'needs-review', claims: [{ id: 'c1', text: 'Los importes del ejemplo forman un presupuesto', sourceId: 's1', quote: text.slice(0, 100) }], sections: [{ heading: 'Preparar el presupuesto del ejemplo', blocks: [{ type: 'paragraph', kind: 'sourced', text: paragraph, claimIds: ['c1'] }] }, { heading: 'Revisar los gastos al regresar', blocks: [{ type: 'paragraph', kind: 'example', text: paragraph, claimIds: [] }, { type: 'table', kind: 'example', headers: ['Concepto', 'Importe'], rows: [['Combustible', '30 €'], ['Parking', '10 €']], claimIds: [] }] }], faq: [] },
+    article: { slug: 'repartir-gastos-viaje-coche', topicId: 'repartir-gastos-viaje', intent: 'reparto-gastos-entre-ocupantes', title: 'Cómo repartir los gastos de un viaje entre personas', seoTitle: 'Repartir gastos de un viaje entre personas | MiMotor', description: 'Suma combustible, peajes y aparcamiento y divide el total entre los participantes. Un ejemplo para revisar el presupuesto antes del viaje.', excerpt: 'Un ejemplo de reparto con los importes que has indicado para el viaje.', keyword: 'repartir gastos viaje coche', category: 'costes', market: 'ES', publishedAt: day, updatedAt: day, status: 'needs-review', claims: [{ id: 'c1', text: 'Los importes del ejemplo forman un presupuesto', sourceId: 's1', quote: text.slice(0, 100) }], sections: [{ heading: 'Preparar el presupuesto del ejemplo', blocks: [{ type: 'paragraph', kind: 'sourced', text: paragraph, claimIds: ['c1'] }] }, { heading: 'Revisar los gastos al regresar', blocks: [{ type: 'paragraph', kind: 'example', text: paragraph, claimIds: [] }, { type: 'table', kind: 'example', headers: ['Concepto', 'Importe'], rows: [['Combustible', '30 â‚¬'], ['Parking', '10 â‚¬']], claimIds: [] }] }], faq: [] },
     evidence: [{ id: 's1', url: 'https://www.idae.es/prueba', retrievedAt: new Date().toISOString(), text, sha256: hash(text) }]
   };
 }
 async function workspace(t) {
   const base = await fs.mkdtemp(path.join(os.tmpdir(), 'mimotor-test-'));
   t.after(() => fs.rm(base, { recursive: true, force: true }));
-  for (const name of ['index.html', 'CNAME', 'robots.txt', 'content', 'css', 'js', 'herramientas', 'guias', 'actualidad', 'ia-y-coche', 'tu-coche']) await fs.cp(path.join(root, name), path.join(base, name), { recursive: true });
+  for (const name of ['index.html', 'CNAME', 'robots.txt', 'content', 'css', 'js', 'herramientas', 'guias', 'actualidad', 'ia-y-coche', 'tu-coche']) await fs.cp(path.join(root, name), path.join(base, name), { recursive: true, filter: source => path.basename(source) !== 'articles' });
+  const topics = require('../content/topics.json');
+  await fs.writeFile(path.join(base, 'content/topics.json'), JSON.stringify([{ ...topics.find(t => t.id === 'repartir-gastos-viaje'), status: 'queued' }]));
   return base;
 }
 test('valida metadatos, fechas, fuentes, estructura y aprobación humana', async () => {
@@ -64,9 +66,12 @@ test('genera un artículo revisable, con máximo de tokens, sin sobrescribir', a
   const fetchImpl = async (url, options) => {
     if (options.method !== 'POST') return new Response(f.evidence[0].text, { headers: { 'content-type': 'text/plain' } });
     calls++; assert.equal(JSON.parse(options.body).max_tokens, 4500);
-    return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(f.article) } }] });
+    assert.deepEqual(JSON.parse(options.body).thinking, { type: 'disabled' });
+    assert.match(options.headers['User-Agent'], /MiMotorEditorial/);
+    assert.match(options.headers['x-opencode-session'], /^[0-9a-f-]{36}$/);
+    return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ ...f.article, claims: f.article.claims.map(c => ({ ...c, quoteId: 'q1' })) }) } }] });
   };
-  const options = { base, env: { EDITORIAL_AI_API_KEY: 'test-only', EDITORIAL_AI_BASE_URL: 'https://provider.example', EDITORIAL_AI_MODEL: 'configurable-test-model' }, fetchImpl };
+  const options = { base, env: { EDITORIAL_AI_API_KEY: 'test-only', EDITORIAL_AI_BASE_URL: 'https://opencode.ai/zen/go/v1', EDITORIAL_AI_MODEL: 'deepseek-v4-flash' }, fetchImpl };
   const result = await generate(options); assert.equal(result.status, 'needs-review'); assert.equal(calls, 1);
   const file = path.join(base, 'content/articles', result.slug + '.json'); const before = await fs.readFile(file, 'utf8');
   const next = await generate(options); assert.equal(next.topic, null); assert.equal(calls, 1); assert.equal(await fs.readFile(file, 'utf8'), before);
@@ -94,4 +99,54 @@ test('enlaces internos son deterministas y excluyen el propio artículo', async 
   const { internalLinks } = await import('../scripts/editorial-core.mjs'); const { article } = await fixture();
   const pages = [{ url: '/herramientas/coste-viaje/', title: 'Coste del viaje' }, { url: '/guias/' + article.slug + '/', title: article.title }];
   assert.deepEqual(internalLinks(article, pages).map(p => p.url), ['/herramientas/coste-viaje/']);
+});
+
+test('la cola activa se centra en España sin repetir intenciones', async t => {
+  const base = await workspace(t);
+  await fs.copyFile(path.join(root, 'content/topics.json'), path.join(base, 'content/topics.json'));
+  const { validateTopic, duplicate, sourceUrl } = await import('../scripts/editorial-core.mjs');
+  const { plan } = await import('../scripts/editorial.mjs');
+  const topics = require('../content/topics.json').filter(t => t.status === 'queued');
+  const prior = []; const skip = [];
+  for (const topic of topics) {
+    validateTopic(topic); topic.sources.forEach(url => sourceUrl(url, config));
+    assert.equal(topic.category, 'ia-y-coche'); assert.match(topic.brief, /España/);
+    assert.equal(duplicate(topic, prior), undefined);
+    assert.equal((await plan(base, skip)).topic.id, topic.id);
+    prior.push(topic); skip.push(topic.id);
+  }
+});
+
+test('investigación prioriza main frente a navegación extensa', async () => {
+  const { research } = await import('../scripts/editorial-core.mjs');
+  const f = await fixture(); const topic = { ...require('../content/topics.json')[0], sources: [f.evidence[0].url] };
+  const result = await research(topic, config, async () => new Response('<header>' + 'menú '.repeat(4000) + '</header><main>' + f.evidence[0].text + '</main>', { headers: { 'content-type': 'text/html' } }));
+  assert.equal(result[0].text, f.evidence[0].text.trim());
+});
+
+test('corrige validación una vez sin superar dos solicitudes', async t => {
+  const base = await workspace(t); const { generate } = await import('../scripts/editorial.mjs'); const f = await fixture(); let calls = 0;
+  const fetchImpl = async (url, options) => {
+    if (options.method !== 'POST') return new Response(f.evidence[0].text, { headers: { 'content-type': 'text/plain' } });
+    calls++;
+    const article = structuredClone(f.article); article.claims[0].quoteId = 'q1';
+    article.description = 'Una descripción editorial extensa que se abrevia en un límite de palabra. '.repeat(4);
+    article.claims.push({ id: 'c99', text: 'Esta afirmación no se utiliza', sourceId: 's1', quoteId: 'q1' });
+    if (calls === 1) article.sections[0].blocks[0].claimIds = [];
+    else assert.match(JSON.parse(options.body).messages.at(-1).content, /Falta registro de afirmaciones/);
+    return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(article) } }] });
+  };
+  const result = await generate({ base, fetchImpl, env: { EDITORIAL_AI_API_KEY: 'test', EDITORIAL_AI_BASE_URL: 'https://provider.example', EDITORIAL_AI_MODEL: 'test' } });
+  assert.equal(result.requests, 2); assert.equal(calls, 2);
+  const record = JSON.parse(await fs.readFile(path.join(base, 'content/articles', result.slug + '.json'), 'utf8'));
+  assert.ok(record.article.description.length <= 165); assert.equal(record.article.claims.length, 1);
+});
+
+test('dos borradores inválidos fallan sin escribir ni tercera llamada', async t => {
+  const base = await workspace(t); const { generate } = await import('../scripts/editorial.mjs'); const f = await fixture(); let calls = 0;
+  await assert.rejects(generate({ base, env: { EDITORIAL_AI_API_KEY: 'test', EDITORIAL_AI_BASE_URL: 'https://provider.example', EDITORIAL_AI_MODEL: 'test' }, fetchImpl: async (url, o) => {
+    if (o.method !== 'POST') return new Response(f.evidence[0].text, { headers: { 'content-type': 'text/plain' } });
+    calls++; return Response.json({ choices: [{ finish_reason: 'stop', message: { content: '{}' } }] });
+  } }), /tras 2 intentos/);
+  assert.equal(calls, 2); assert.deepEqual(await fs.readdir(path.join(base, 'content/articles')), []);
 });

@@ -4,7 +4,7 @@
 
 `content/registry.json` registra las guías heredadas. Los registros inmutables de `content/articles/<slug>.json` son el historial de los temas nuevos, tanto pendientes como aprobados. No hace falta duplicarlos en el registro legado. La generación utiliza creación exclusiva y nunca actualiza un artículo existente. Los cambios de un artículo aprobado se hacen mediante edición y revisión normal.
 
-El nuevo workflow es `.github/workflows/articles.yml`. No depende del descubrimiento RSS legado: permite contenido de consumo, costes, mantenimiento, ITV y neumáticos. La cola inicial tiene un tema activo y uno pausado. Cada tema necesita ID, slug, intención, keyword, categoría, brief y 1–3 fuentes primarias. Añade temas útiles y fuentes antes de activar una cola mayor.
+El nuevo workflow es `.github/workflows/articles.yml`. No depende del descubrimiento RSS legado: permite contenido de consumo, costes, mantenimiento, ITV y neumáticos. La cola activa contiene cuatro temas sobre ChatGPT y Claude con tu vehículo, enfocados a España: manual, presupuestos, historial de mantenimiento y preparación de viajes. Los temas anteriores quedan pausados. Cada tema necesita ID, slug, intención, keyword, categoría, brief y 1–3 fuentes primarias. Añade temas útiles y fuentes antes de activar una cola mayor.
 
 **Configuración y comandos**
 
@@ -29,7 +29,7 @@ La generación exige estas variables de entorno, o Secret/Variables de GitHub co
 | `EDITORIAL_AI_MODEL` | Variable | Identificador exacto admitido por el proveedor |
 | `EDITORIAL_ENABLED` | Variable | `true` para habilitar la ejecución semanal |
 
-El proveedor está en `content/editorial.config.json`: `openai-compatible`. Cambiar endpoint/modelo no requiere cambiar el generador. Puede apuntar al modelo económico que elijas, incluido DeepSeek V4 Flash si ese identificador está disponible en tu proveedor. No se ha comprobado su disponibilidad ni precio. No hay un modelo de Astra codificado en producción. La clave de la API pública del coche es independiente de la editorial.
+El proveedor está en `content/editorial.config.json`: `openai-compatible`. Cambiar endpoint/modelo no requiere cambiar el generador. Usa OpenCode Go con base `https://opencode.ai/zen/go/v1` y modelo `deepseek-v4-flash`, sin razonamiento adicional para reservar los tokens al artículo. La clave existente de OpenCode Go se guarda como secret de GitHub. El cliente identifica MiMotorEditorial y envía una sesión por ejecución. Frecuencia: lunes a las 07:30 UTC (09:30 en verano y 08:30 en invierno en España peninsular). Al agotarse los cuatro temas, no consume IA hasta añadir nuevos temas. No hay un modelo de Astra codificado en producción. La clave de la API pública del coche es independiente de la editorial.
 
 ```sh
 npm run editorial:generate
@@ -41,8 +41,8 @@ Sin variables requeridas falla antes de acceder a la red. No imprime claves ni c
 **Límites y fallos**
 
 - Un artículo por ejecución. Máximo dos solicitudes de modelo, 4500 tokens de salida por intento por defecto, techo configurable 6000.
-- Solo reintenta una vez ante HTTP 429/503, con espera de un segundo. No reintenta errores de red inciertos, JSON inválido ni validación fallida.
-- Timeout de 30 segundos por fuente/modelo; workflow máximo ocho minutos.
+- Máximo dos solicitudes en total, incluidas correcciones. Ante HTTP 429/503 espera un segundo. Si el JSON o su validación fallan, permite una corrección con el error del validador. No reintenta errores de red inciertos. Las citas se seleccionan por ID de extracto y el código copia el texto original; no se acepta una cita redactada por el modelo.
+- Timeout de 60 segundos por fuente/modelo; workflow máximo ocho minutos.
 - Máximo tres fuentes de 600000 bytes cada una; se conserva un extracto de hasta 14000 caracteres por fuente, fecha y SHA-256. Respuesta de modelo: 80000 bytes máximo.
 - Fuentes HTTPS en lista explícita. No se siguen redirecciones ni se procesan PDF. Actualiza una URL que redirija a su destino primario verificado.
 - La investigación de borradores caduca a los 30 días. Reinvestigar antes de revisar uno antiguo. Los artículos aprobados conservan su fecha y evidencia histórica.
