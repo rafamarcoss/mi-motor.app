@@ -18,7 +18,7 @@ async function fixture() {
 async function workspace(t) {
   const base = await fs.mkdtemp(path.join(os.tmpdir(), 'mimotor-test-'));
   t.after(() => fs.rm(base, { recursive: true, force: true }));
-  for (const name of ['index.html', 'CNAME', 'robots.txt', 'content', 'css', 'js', 'data', 'herramientas', 'guias', 'actualidad', 'ia-y-coche', 'tu-coche']) await fs.cp(path.join(root, name), path.join(base, name), { recursive: true });
+  for (const name of ['index.html', 'CNAME', 'robots.txt', 'content', 'css', 'js', 'herramientas', 'guias', 'actualidad', 'ia-y-coche', 'tu-coche']) await fs.cp(path.join(root, name), path.join(base, name), { recursive: true });
   return base;
 }
 test('valida metadatos, fechas, fuentes, estructura y aprobación humana', async () => {
