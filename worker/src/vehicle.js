@@ -11,6 +11,10 @@ const KNOWN_VEHICLES = [
     powerCv: 120,
     powerKw: 88,
     referenceConsumption: 6.1,
+    urbanConsumption: 7.8,
+    roadConsumption: 5.1,
+    displacementCc: 1910,
+    tankLiters: 52,
     confidence: 0.96,
     source: 'local-catalog'
   }
@@ -24,12 +28,17 @@ export function vehicleId(vehicle) {
 }
 
 export function resolveKnownVehicle(input) {
-  const text = normaliseText(input);
+  const text = normaliseText(typeof input === 'string' ? input : [input?.make, input?.model, input?.generation, input?.year, input?.engine, input?.powerCv].join(' '));
   const match = KNOWN_VEHICLES.find((vehicle) => {
     return text.includes('opel') && text.includes('astra') && text.includes('1 9')
       && text.includes('2010') && text.includes('120');
   });
   return match ? { ...match, vehicleId: vehicleId(match), cached: true } : null;
+}
+
+export function searchKnownVehicles(filters = {}) {
+  const entries = Object.entries(filters).filter(([, value]) => value !== undefined && value !== null && value !== '');
+  return KNOWN_VEHICLES.filter((vehicle) => entries.every(([key, value]) => normaliseText(vehicle[key]) === normaliseText(value))).map((vehicle) => ({ ...vehicle, vehicleId: vehicleId(vehicle) }));
 }
 
 export function validateVehicle(value) {

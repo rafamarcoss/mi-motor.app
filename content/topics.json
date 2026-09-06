@@ -1,0 +1,26 @@
+[
+  {
+    "id": "repartir-gastos-viaje",
+    "slug": "repartir-gastos-viaje-coche",
+    "title": "Cómo repartir combustible, peajes y aparcamiento en un viaje",
+    "keyword": "repartir gastos viaje coche",
+    "intent": "reparto-gastos-entre-ocupantes",
+    "category": "costes",
+    "status": "queued",
+    "sources": [
+      "https://www.idae.es/movilidad-sostenible/10-reglas-de-oro-de-la-conduccion-eficiente"
+    ],
+    "brief": "Explicar una fórmula de reparto igualitario con un ejemplo aritmético: incluir conductor, combustible, peajes y aparcamiento totales. Aclarar ida y vuelta. La fuente IDAE sirve únicamente para explicar por qué la conducción puede variar el consumo estimado; no atribuirle la fórmula de reparto. No afirmar normas legales sobre viajes compartidos."
+  },
+  {
+    "id": "presupuesto-mantenimiento",
+    "slug": "presupuesto-mantenimiento-coche",
+    "title": "Cómo preparar un presupuesto de mantenimiento con tus facturas",
+    "keyword": "presupuesto mantenimiento facturas coche",
+    "intent": "planificar-reserva-mantenimiento",
+    "category": "mantenimiento",
+    "status": "paused",
+    "sources": [],
+    "brief": "Usar importes aportados por el lector, sin inventar intervalos ni tarifas. Añadir fuentes primarias antes de activar."
+  }
+]

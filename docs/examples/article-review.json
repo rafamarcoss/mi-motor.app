@@ -1,0 +1,116 @@
+{
+  "article": {
+    "slug": "repartir-gastos-viaje-coche",
+    "topicId": "repartir-gastos-viaje",
+    "intent": "reparto-gastos-entre-ocupantes",
+    "title": "Cómo repartir los gastos de un viaje en coche",
+    "seoTitle": "Repartir gastos de viaje: combustible, peajes y parking",
+    "description": "Prepara el reparto de combustible, peajes y aparcamiento con un ejemplo de 40 euros entre cuatro personas y revisa los gastos al terminar.",
+    "excerpt": "Acuerda qué gastos se comparten, suma los importes de todo el recorrido y divide entre las personas que participan.",
+    "keyword": "repartir gastos viaje coche",
+    "category": "costes",
+    "market": "ES",
+    "publishedAt": "2026-09-05",
+    "updatedAt": "2026-09-05",
+    "status": "needs-review",
+    "claims": [
+      {
+        "id": "c1",
+        "text": "El IDAE incluye mantener una velocidad uniforme entre sus pautas de conducción eficiente",
+        "sourceId": "s1",
+        "quote": "Mantenerla lo más uniforme posible"
+      }
+    ],
+    "sections": [
+      {
+        "heading": "Acuerda qué entra en el reparto",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "kind": "guidance",
+            "claimIds": [],
+            "text": "Antes de salir, decidid si vais a compartir únicamente combustible o también peajes y aparcamiento. Anota si el conductor participa en el reparto y cuántas personas pagan. No presupongas que todos entendéis lo mismo: dejarlo acordado evita tener que rehacer la cuenta cuando termine el viaje. En la calculadora, el campo de personas representa el número entre el que se divide el total."
+          },
+          {
+            "type": "paragraph",
+            "kind": "guidance",
+            "claimIds": [],
+            "text": "Usa importes para el recorrido completo. Si has seleccionado ida y vuelta, introduce el total de peajes y aparcamiento de ambos trayectos: esos extras se suman una vez. Esta cuenta es una propuesta de reparto igualitario. Si acordáis porcentajes diferentes o que alguien no participe, tendréis que adaptar la división."
+          }
+        ]
+      },
+      {
+        "heading": "Ejemplo de 40 euros entre cuatro personas",
+        "blocks": [
+          {
+            "type": "table",
+            "kind": "example",
+            "claimIds": [],
+            "headers": [
+              "Concepto",
+              "Importe del ejemplo"
+            ],
+            "rows": [
+              [
+                "Combustible",
+                "30 €"
+              ],
+              [
+                "Peajes",
+                "6 €"
+              ],
+              [
+                "Aparcamiento",
+                "4 €"
+              ],
+              [
+                "Total",
+                "40 €"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "kind": "example",
+            "claimIds": [],
+            "text": "Si participan cuatro personas, incluida quien conduce, 40 dividido entre 4 da 10 euros por persona. Los importes son hipotéticos: no representan el precio de una ruta ni el consumo de un vehículo concreto. Sustituye cada cantidad por tu presupuesto o por el gasto de tus recibos antes de compartir el resultado."
+          }
+        ]
+      },
+      {
+        "heading": "Revisa la estimación al terminar",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "kind": "sourced",
+            "claimIds": [
+              "c1"
+            ],
+            "text": "El IDAE incluye circular a una velocidad uniforme dentro de sus pautas de conducción eficiente. La fuente no proporciona una fórmula para repartir gastos entre personas; esa división depende de los importes y del acuerdo del grupo."
+          },
+          {
+            "type": "paragraph",
+            "kind": "guidance",
+            "claimIds": [],
+            "text": "Guarda los recibos que necesitéis para revisar la cuenta y sustituye la estimación inicial por los gastos acordados. Si compartes el enlace de MiMotor, comprueba los importes primero. El enlace contiene los valores del cálculo y sus ajustes, pero no el nombre del coche ni las ciudades del recorrido."
+          }
+        ]
+      }
+    ],
+    "faq": []
+  },
+  "evidence": [
+    {
+      "id": "s1",
+      "url": "https://www.idae.es/movilidad-sostenible/10-reglas-de-oro-de-la-conduccion-eficiente",
+      "retrievedAt": "2026-09-05T11:58:07.610Z",
+      "sha256": "634cc518e753a9f99db28d863dfccfe20d27cb32ed87291c8ce6f837ef93fa7d",
+      "text": "10 reglas de oro de la conducción eficiente | Idae --> 10 reglas de oro de la conducción eficiente | Idae Pasar al contenido principal Perfil de contratante Sede electrónica Canal de denuncias Portal de la transparencia Twitter LinkedIn Facebook Youtube Instagram Newsletter es Español Catalan Euskera Gallego Inglés Toggle navigation Search Buscar Buscar Inicio IDAE movilidad sostenible 10 reglas de oro de la conducción eficiente Idae 10 reglas de oro de la conducción eficiente ¿Por qué la conducción eficiente? Ahorro de energía y reducción de contaminantes Aunque el consumo nominal de los coches nuevos haya bajado, el consumo total de carburante y las emisiones contaminantes siguen aumentando de manera preocupante. Para lograr los objetivos de la política europea y cumplir con los acuerdos sobre reducción de CO 2 , es necesario aumentar la eficiencia energética en el sector transporte 1. Arranque y puesta en marcha Arrancar el motor sin pisar el acelerador En los motores de gasolina, iniciar la marcha inmediatamente después del arranque En los motores diesel, esperar unos segundos antes de comenzar la marcha 2. Primera Marcha Usarla solo para el inicio de la marcha Cambiar a segunda a los 2 segundos o seis metros aproximadamente 3. Aceleración y cambios de marcha Según las revoluciones : En los motores de gasolina: entre las 2.000 y 2.500 r/min En los motores de diesel: entre las 1.500 y 2.000 r/min Según la velocidad : a 2ª marcha: a los 2 segundos o 6 metros a 3ª marcha: a partir de unos 30 Km/h a 4ª marcha: a partir de unos 40 Km/h a 5ª marcha: por encima de unos 50 Km/h Acelere tras la realización del cambio 4. Utilización de las marchas Circular lo máximo posible en las marchas más largas y a bajas revoluciones Es preferible circular en marchas largas con el acelerador pisado en mayor medida que en marchas cortas con el acelerador menos pisado En ciudad siempre que sea posible utilizar la 4ª y 5ª marcha 5. Velocidad de circulación Mantenerla lo más uniforme posible Buscar fluidez en la circulación, evitando los frenazos, aceleraciones y cambios de marchas innecesarios 6. Deceleración Levantar el pie del acelerador y dejar rodar el vehículo con la marcha engranada en ese instante Frenar de forma suave con el pedal del freno Reducir de marcha lo más tarde posible, con especial atención en las bajadas 7. Detención Siempre que la velocidad y el espacio lo permitan, detener el coche sin reducir previamente de marcha 8. Paradas En paradas prolongadas (por encima de 60 segundos) es recomendable apagar el motor 9. Anticipación y previsión Conducir siempre con adecuada distancia de seguridad y un amplio campo de visión que permita ver 2 ó 3 vehículos por delante En el momento en que se detecte un obstáculo o una reducción de la velocidad de circulación en la vía, levantar el pie del acelerador para anticipar las siguientes maniobras 10. Seguridad En la mayoría de las situaciones, aplicar las reglas de la conducción eficiente contribuye al aumento de la seguridad vial Pero obviamente existen circunstancias que requieren acciones específicas distintas, para que la seguridad no se ve afectada La conducción eficiente.............¡Una práctica sencilla! Vídeos divulgativos \"Técnicas para una conducción más eficiente\" En España, se estima que el automóvil usa el 15% de la energía total que se consume en el país. La dependencia energética de España en fuentes de energía convencionales, unido al alza constante de los precios de los combustibles obliga a adoptar medidas para reducir esta dependencia. Una de ellas es la conducción eficiente. En esta serie de ocho capítulos, realizada por MAPFRE y el IDAE, aprenderá cómo utilizar el automóvil de una forma más racional y eficiente. Acceda a los vídeos"
+    }
+  ],
+  "generation": {
+    "provider": "manual-example",
+    "model": null,
+    "requests": 0
+  }
+}

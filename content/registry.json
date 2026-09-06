@@ -1,0 +1,4 @@
+[
+  { "id": "legacy-consumo", "slug": "como-calcular-consumo-real", "title": "Cómo calcular el consumo real del coche", "keyword": "calcular consumo real coche", "intent": "medir-consumo-lleno-a-lleno", "url": "/guias/como-calcular-consumo-real/", "status": "published" },
+  { "id": "legacy-factura", "slug": "entender-factura-taller-con-ia", "title": "Cómo entender una factura del taller con IA", "keyword": "entender factura taller ia", "intent": "interpretar-factura-taller", "url": "/guias/entender-factura-taller-con-ia/", "status": "published" }
+]
