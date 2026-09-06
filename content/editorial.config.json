@@ -3,9 +3,18 @@
   "maxArticles": 1,
   "maxRequests": 2,
   "maxTokens": 4500,
-  "timeoutMs": 30000,
+  "timeoutMs": 60000,
   "maxSourceBytes": 600000,
   "maxOutputBytes": 80000,
   "sourceMaxAgeDays": 30,
-  "allowedSourceHosts": ["www.dgt.es", "www.boe.es", "www.idae.es", "www.miteco.gob.es", "www.mintur.gob.es", "www.aemet.es"]
+  "allowedSourceHosts": [
+    "www.dgt.es",
+    "www.boe.es",
+    "www.idae.es",
+    "www.miteco.gob.es",
+    "www.mintur.gob.es",
+    "www.aemet.es",
+    "support.claude.com",
+    "learn.chatgpt.com"
+  ]
 }

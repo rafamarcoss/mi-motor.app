@@ -1,26 +1,82 @@
 [
   {
+    "id": "consultar-manual-con-ia",
+    "slug": "consultar-manual-con-ia",
+    "title": "Consultar el manual de tu coche con ChatGPT o Claude",
+    "keyword": "consultar manual vehiculo inteligencia artificial",
+    "intent": "buscar-informacion-manual-vehiculo",
+    "category": "ia-y-coche",
+    "status": "queued",
+    "sources": [
+      "https://support.claude.com/es/articles/8241126-cargar-archivos-en-claude",
+      "https://learn.chatgpt.com/docs/use-chatgpt"
+    ],
+    "brief": "Ayudar a consultar un manual digital aportado por el lector: localizar una función, pedir página y cita, detectar cuando falta información. No interpretar testigos ni sustituir indicaciones de seguridad del fabricante. España, español de España, euros y kilómetros. Incluir un prompt completo que el lector pueda copiar y un ejemplo hipotético. Pedir comprobar las respuestas en el documento original; no inventar prestaciones, precios, normativa ni diagnósticos. Recomendar ocultar datos personales antes de adjuntar documentos. Trabajar con el vehículo estacionado. Diferenciar capacidades documentadas y propuestas de uso."
+  },
+  {
+    "id": "comparar-presupuestos-taller-ia",
+    "slug": "comparar-presupuestos-taller-ia",
+    "title": "Comparar dos presupuestos de taller con ChatGPT o Claude",
+    "keyword": "comparar presupuestos taller chatgpt claude",
+    "intent": "comparar-ofertas-reparacion",
+    "category": "ia-y-coche",
+    "status": "queued",
+    "sources": [
+      "https://support.claude.com/es/articles/8241126-cargar-archivos-en-claude",
+      "https://learn.chatgpt.com/docs/use-chatgpt"
+    ],
+    "brief": "Comparar dos presupuestos ANTES de contratar: conceptos equivalentes, piezas, mano de obra, IVA explícito y preguntas pendientes. No interpretar una factura pagada: ya existe esa guía. No decidir qué reparación es necesaria. España, español de España, euros y kilómetros. Incluir un prompt completo que el lector pueda copiar y un ejemplo hipotético. Pedir comprobar las respuestas en el documento original; no inventar prestaciones, precios, normativa ni diagnósticos. Recomendar ocultar datos personales antes de adjuntar documentos. Trabajar con el vehículo estacionado. Diferenciar capacidades documentadas y propuestas de uso."
+  },
+  {
+    "id": "organizar-mantenimiento-ia",
+    "slug": "organizar-mantenimiento-ia",
+    "title": "Organizar el mantenimiento del coche con ChatGPT o Claude",
+    "keyword": "organizar registro mantenimiento claude chatgpt",
+    "intent": "ordenar-historial-mantenimiento",
+    "category": "ia-y-coche",
+    "status": "queued",
+    "sources": [
+      "https://support.claude.com/es/articles/8241126-cargar-archivos-en-claude",
+      "https://learn.chatgpt.com/docs/use-chatgpt"
+    ],
+    "brief": "Convertir un historial que aporta el lector en tabla de fecha, kilómetros y trabajo realizado, marcando datos ausentes. No recomendar intervalos ni predecir averías. España, español de España, euros y kilómetros. Incluir un prompt completo que el lector pueda copiar y un ejemplo hipotético. Pedir comprobar las respuestas en el documento original; no inventar prestaciones, precios, normativa ni diagnósticos. Recomendar ocultar datos personales antes de adjuntar documentos. Trabajar con el vehículo estacionado. Diferenciar capacidades documentadas y propuestas de uso."
+  },
+  {
+    "id": "preparar-viaje-ia",
+    "slug": "preparar-viaje-ia",
+    "title": "Preparar un viaje por España con ChatGPT o Claude",
+    "keyword": "preparar viaje espana chatgpt claude",
+    "intent": "preparar-lista-viaje",
+    "category": "ia-y-coche",
+    "status": "queued",
+    "sources": [
+      "https://support.claude.com/es/articles/8241126-cargar-archivos-en-claude",
+      "https://learn.chatgpt.com/docs/use-chatgpt"
+    ],
+    "brief": "Organizar preferencias, paradas deseadas y lista de preparación con datos proporcionados por el lector. No afirmar información en tiempo real, rutas seguras, horarios, tráfico o restricciones; indicar que deben consultarse en fuentes vigentes antes de salir. España, español de España, euros y kilómetros. Incluir un prompt completo que el lector pueda copiar y un ejemplo hipotético. Pedir comprobar las respuestas en el documento original; no inventar prestaciones, precios, normativa ni diagnósticos. Recomendar ocultar datos personales antes de adjuntar documentos. Trabajar con el vehículo estacionado. Diferenciar capacidades documentadas y propuestas de uso."
+  },
+  {
     "id": "repartir-gastos-viaje",
     "slug": "repartir-gastos-viaje-coche",
-    "title": "Cómo repartir combustible, peajes y aparcamiento en un viaje",
+    "title": "CÃ³mo repartir combustible, peajes y aparcamiento en un viaje",
     "keyword": "repartir gastos viaje coche",
     "intent": "reparto-gastos-entre-ocupantes",
     "category": "costes",
-    "status": "queued",
+    "status": "paused",
     "sources": [
       "https://www.idae.es/movilidad-sostenible/10-reglas-de-oro-de-la-conduccion-eficiente"
     ],
-    "brief": "Explicar una fórmula de reparto igualitario con un ejemplo aritmético: incluir conductor, combustible, peajes y aparcamiento totales. Aclarar ida y vuelta. La fuente IDAE sirve únicamente para explicar por qué la conducción puede variar el consumo estimado; no atribuirle la fórmula de reparto. No afirmar normas legales sobre viajes compartidos."
+    "brief": "Explicar una fÃ³rmula de reparto igualitario con un ejemplo aritmÃ©tico: incluir conductor, combustible, peajes y aparcamiento totales. Aclarar ida y vuelta. La fuente IDAE sirve Ãºnicamente para explicar por quÃ© la conducciÃ³n puede variar el consumo estimado; no atribuirle la fÃ³rmula de reparto. No afirmar normas legales sobre viajes compartidos."
   },
   {
     "id": "presupuesto-mantenimiento",
     "slug": "presupuesto-mantenimiento-coche",
-    "title": "Cómo preparar un presupuesto de mantenimiento con tus facturas",
+    "title": "CÃ³mo preparar un presupuesto de mantenimiento con tus facturas",
     "keyword": "presupuesto mantenimiento facturas coche",
     "intent": "planificar-reserva-mantenimiento",
     "category": "mantenimiento",
     "status": "paused",
     "sources": [],
-    "brief": "Usar importes aportados por el lector, sin inventar intervalos ni tarifas. Añadir fuentes primarias antes de activar."
+    "brief": "Usar importes aportados por el lector, sin inventar intervalos ni tarifas. AÃ±adir fuentes primarias antes de activar."
   }
 ]

@@ -20,7 +20,7 @@ export function duplicate(topic, records) {
 export function validateTopic(t) {
   for (const key of ['id', 'slug', 'intent']) check(typeof t[key] === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(t[key]) && t[key].length <= 90, `Tema: ${key} inválido`);
   for (const key of ['title', 'keyword', 'brief']) check(typeof t[key] === 'string' && t[key].length > 10 && t[key].length < 2000, `Tema: falta ${key}`);
-  check(['costes', 'consumo', 'mantenimiento', 'itv', 'neumaticos', 'actualidad'].includes(t.category), 'Categoría inválida');
+  check(['costes', 'consumo', 'mantenimiento', 'itv', 'neumaticos', 'actualidad', 'ia-y-coche'].includes(t.category), 'Categoría inválida');
   check(Array.isArray(t.sources) && t.sources.length >= 1 && t.sources.length <= 3, 'Se requieren de 1 a 3 fuentes primarias');
 }
 export function validateConfig(c) {
@@ -50,7 +50,8 @@ export async function research(topic, config, fetchImpl = fetch) {
     check(response.ok, `Fuente no disponible: HTTP ${response.status}`);
     check(/text\/(html|plain)/i.test(response.headers.get('content-type') || ''), 'Fuente no textual: usar una página HTML primaria');
     const raw = await boundedText(response, config.maxSourceBytes);
-    const text = raw.replace(/<(script|style|nav|footer)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim().slice(0, 14000);
+    const main = raw.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] || raw;
+    const text = main.replace(/<(script|style|nav|footer)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim().slice(0, 14000);
     check(text.length >= 200, 'Fuente sin contenido suficiente');
     evidence.push({ id: `s${evidence.length + 1}`, url: safeUrl, retrievedAt: new Date().toISOString(), sha256: hash(text), text });
   }
@@ -62,7 +63,7 @@ export function validateArticle(a, evidence, config, now = new Date()) {
   check(a && typeof a === 'object', 'Artículo inválido');
   for (const key of ['slug', 'topicId', 'intent']) check(typeof a[key] === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a[key]) && a[key].length <= 90, `Artículo: ${key} inválido`);
   for (const [key, min, max] of [['title', 15, 110], ['seoTitle', 15, 65], ['description', 60, 165], ['excerpt', 40, 300], ['keyword', 10, 120]]) check(plain(a[key], min, max), `Artículo: ${key} inválido`);
-  check(['costes', 'consumo', 'mantenimiento', 'itv', 'neumaticos', 'actualidad'].includes(a.category), 'Categoría inválida');
+  check(['costes', 'consumo', 'mantenimiento', 'itv', 'neumaticos', 'actualidad', 'ia-y-coche'].includes(a.category), 'Categoría inválida');
   check(a.market === 'ES', 'El mercado debe ser ES');
   check(dateValid(a.publishedAt) && dateValid(a.updatedAt) && a.updatedAt >= a.publishedAt && a.updatedAt <= now.toISOString().slice(0, 10), 'Fechas inválidas');
   check(['needs-review', 'approved'].includes(a.status), 'Estado editorial inválido');
