@@ -1,0 +1,24 @@
+name: Informe GSC diario
+on:
+  schedule:
+    - cron: '10 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: gsc-report
+  cancel-in-progress: false
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm run gsc:report
+        env:
+          GSC_ACCESS_TOKEN: ${{ secrets.GSC_ACCESS_TOKEN }}
+          GSC_SITE_URL: ${{ vars.GSC_SITE_URL }}
+      - uses: actions/upload-artifact@v4
+        with: { name: gsc-report, path: reports/gsc-baseline.json, retention-days: 90 }

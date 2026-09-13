@@ -63,8 +63,8 @@ test('genera un artículo revisable, con máximo de tokens, sin sobrescribir', a
   const base = await workspace(t); const { generate } = await import('../scripts/editorial.mjs'); const f = await fixture(); let calls = 0;
   const fetchImpl = async (url, options) => {
     if (options.method !== 'POST') return new Response(f.evidence[0].text, { headers: { 'content-type': 'text/plain' } });
-    calls++; assert.equal(JSON.parse(options.body).max_tokens, 4500);
-    return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(f.article) } }] });
+    calls++; const body = JSON.parse(options.body); assert.equal(body.max_output_tokens, 4500); assert.equal(body.reasoning.effort, 'low');
+    return Response.json({ status: 'completed', output_text: JSON.stringify(f.article), model: 'configurable-test-model' });
   };
   const options = { base, env: { EDITORIAL_AI_API_KEY: 'test-only', EDITORIAL_AI_BASE_URL: 'https://provider.example', EDITORIAL_AI_MODEL: 'configurable-test-model' }, fetchImpl };
   const result = await generate(options); assert.equal(result.status, 'needs-review'); assert.equal(calls, 1);

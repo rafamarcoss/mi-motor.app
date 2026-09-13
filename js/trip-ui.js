@@ -170,6 +170,7 @@
   }
   form.addEventListener('submit', async function (event) {
     event.preventDefault(); button.disabled = true; button.setAttribute('aria-busy', 'true');
+    if (window.MiMotorAnalytics) window.MiMotorAnalytics.event('calculator_started');
     sharedCalculation = false;
     var profile = resolveFromFields(); var carText = vehicleText(profile);
     var key = JSON.stringify([carText, value('origin'), value('destination')]);
@@ -187,8 +188,8 @@
         routeKey = JSON.stringify([vehicleText(profile), value('origin'), value('destination')]);
       } else if (!useApi || !resolved) resolved = { sources: 'Modo local: distancia y precio indicados por ti. Los valores iniciales son ejemplos.' };
       if (profile && root.querySelector('[data-remember-vehicle]')?.checked) vehicleApi.save(Object.assign({}, profile, { customConsumption: Number(String(value('manual-consumption')).replace(',', '.')) || null }));
-      render();
-    } catch (error) { clearResult(); resolved = null; routeKey = null; if (output.explanation) output.explanation.textContent = error.message || 'No se pudo completar el cálculo.'; if (output.note) output.note.textContent = 'No mostramos datos externos sin verificar.'; }
+      render(); if (window.MiMotorAnalytics) window.MiMotorAnalytics.event('calculator_completed', { source: useApi ? 'api' : 'local' });
+    } catch (error) { clearResult(); resolved = null; routeKey = null; if (window.MiMotorAnalytics) window.MiMotorAnalytics.event('calculator_failed', { code: error.code || 'unknown' }); if (output.explanation) output.explanation.textContent = error.message || 'No se pudo completar el cálculo.'; if (output.note) output.note.textContent = 'No mostramos datos externos sin verificar.'; }
     finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     if (window.innerWidth < 980 && root.querySelector('.calc-results')) root.querySelector('.calc-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });

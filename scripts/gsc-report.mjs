@@ -1,0 +1,8 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { root } from './site-lib.mjs';
+const day = new Date(); const iso = value => value.toISOString().slice(0, 10); const shift = days => new Date(day.getTime() - days * 86400000);
+async function query(startDate, endDate) { const token = process.env.GSC_ACCESS_TOKEN; const site = process.env.GSC_SITE_URL; if (!token || !site) return null; const response = await fetch(`https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site)}/searchAnalytics/query`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ startDate, endDate, dimensions: ['page'], rowLimit: 25000 }) }); if (!response.ok) throw new Error(`GSC HTTP ${response.status}`); return (await response.json()).rows || []; }
+const current = { startDate: iso(shift(28)), endDate: iso(shift(1)) }; const previous = { startDate: iso(shift(56)), endDate: iso(shift(29)) }; const [currentRows, previousRows] = await Promise.all([query(current.startDate, current.endDate), query(previous.startDate, previous.endDate)]);
+const report = { generatedAt: new Date().toISOString(), configured: Boolean(currentRows), current, previous, currentRows, previousRows, note: currentRows ? 'Datos obtenidos de Search Console API.' : 'Bloqueado: define GSC_ACCESS_TOKEN y GSC_SITE_URL. No se inventan métricas.' };
+await mkdir(join(root, 'reports'), { recursive: true }); await writeFile(join(root, 'reports', 'gsc-baseline.json'), JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify({ configured: report.configured, current: currentRows?.length || 0, previous: previousRows?.length || 0 }));

@@ -2,7 +2,7 @@ name: Artículos con revisión
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 7 * * 1'
+    - cron: '30 7 * * *'
 permissions:
   contents: write
   pull-requests: write

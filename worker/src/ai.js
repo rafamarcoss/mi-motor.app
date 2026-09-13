@@ -44,6 +44,8 @@ export class DeepSeekProvider {
       });
       if (!response.ok) throw new ProviderError('AI_PROVIDER_ERROR', `DeepSeek respondió HTTP ${response.status}.`, 502);
       const body = await response.json();
+      this.lastUsage = body?.usage || null;
+      this.lastModel = body?.model || this.model;
       const content = body?.choices?.[0]?.message?.content;
       const parsed = JSON.parse(stripJsonFence(content));
       return parsed;
@@ -53,6 +55,23 @@ export class DeepSeekProvider {
       throw new ProviderError('AI_INVALID_RESPONSE', 'La respuesta de IA no se pudo validar.', 502);
     } finally {
       clearTimeout(timeout);
+    }
+  }
+}
+
+export class OpenAIResponsesProvider {
+  constructor({ apiKey, model = 'gpt-5.6-luna', fetchImpl = fetch, timeoutMs = 10000 } = {}) { this.apiKey = apiKey; this.model = model; this.fetchImpl = fetchImpl; this.timeoutMs = timeoutMs; }
+  async normalizeVehicle(input) {
+    if (!this.apiKey) throw new ProviderError('AI_NOT_CONFIGURED', 'Falta OPENAI_API_KEY.', 503);
+    try {
+      const response = await this.fetchImpl('https://api.openai.com/v1/responses', { method: 'POST', signal: AbortSignal.timeout(this.timeoutMs), headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: this.model, store: false, reasoning: { effort: 'low' }, max_output_tokens: 220, text: { format: { type: 'json_schema', name: 'vehicle', strict: true, schema: { type: 'object', additionalProperties: false, required: ['make', 'model', 'generation', 'year', 'engine', 'fuel', 'powerCv', 'powerKw', 'referenceConsumption', 'confidence'], properties: { make: { type: ['string', 'null'] }, model: { type: ['string', 'null'] }, generation: { type: ['string', 'null'] }, year: { type: ['number', 'null'] }, engine: { type: ['string', 'null'] }, fuel: { type: ['string', 'null'] }, powerCv: { type: ['number', 'null'] }, powerKw: { type: ['number', 'null'] }, referenceConsumption: { type: ['number', 'null'] }, confidence: { type: 'number' } } } } }, input: `Normaliza este vehículo. Si hay ambigüedad usa null y confidence bajo. No inventes datos: ${input}` }) });
+      if (!response.ok) throw new ProviderError('AI_PROVIDER_ERROR', `OpenAI respondió HTTP ${response.status}.`, 502);
+      const body = await response.json(); this.lastUsage = body?.usage || null; this.lastModel = body?.model || this.model;
+      return JSON.parse(body?.output_text);
+    } catch (error) {
+      if (error instanceof ProviderError) throw error;
+      if (error.name === 'TimeoutError' || error.name === 'AbortError') throw new ProviderError('AI_TIMEOUT', 'La identificación del vehículo tardó demasiado.', 504);
+      throw new ProviderError('AI_INVALID_RESPONSE', 'La respuesta de IA no se pudo validar.', 502);
     }
   }
 }
