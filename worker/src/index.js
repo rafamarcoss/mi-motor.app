@@ -1,5 +1,6 @@
 import { calculateConsumption, calculateCost } from './consumption.js';
-import { DeepSeekProvider, UnavailableAIProvider } from './ai.js';
+import { DeepSeekProvider, OpenAIResponsesProvider, UnavailableAIProvider } from './ai.js';
+import { recordAiUsage } from './telemetry.js';
 import { createStore, MemoryStore } from './store.js';
 import { AiRateLimiter } from './rate-limit.js';
 import { validateTripPayload, validateVehicleInput } from './validation.js';
@@ -122,7 +123,16 @@ async function resolveVehicle(input, { env, request, store, persistentStore, pro
     });
   }
 
-  const resolved = validateVehicle(await providers.ai.normalizeVehicle(inputText));
+  let raw;
+  const startedAt = Date.now();
+  try {
+    raw = await providers.ai.normalizeVehicle(inputText);
+    await recordAiUsage(store, { feature: 'vehicle_estimate', status: 'completed', model: providers.ai.lastModel || env.OPENAI_MODEL || env.DEEPSEEK_MODEL || 'unknown', usage: providers.ai.lastUsage, latencyMs: Date.now() - startedAt });
+  } catch (error) {
+    await recordAiUsage(store, { feature: 'vehicle_estimate', status: 'failed', model: providers.ai.lastModel || env.OPENAI_MODEL || env.DEEPSEEK_MODEL || 'unknown', usage: providers.ai.lastUsage, latencyMs: Date.now() - startedAt });
+    throw error;
+  }
+  const resolved = validateVehicle(raw);
   if (!resolved || (resolved.confidence !== undefined && Number(resolved.confidence) < 0.55)) {
     throw new ApiError('VEHICLE_AMBIGUOUS', 'Necesitamos precisar año y motorización para estimar el consumo.', 422);
   }
@@ -137,7 +147,9 @@ function createProviders(env) {
       ? new OpenRouteServiceProvider({ apiKey: env.OPENROUTESERVICE_API_KEY })
       : new UnavailableRoutingProvider(),
     fuel: new MitecoFuelPriceProvider(),
-    ai: env.DEEPSEEK_API_KEY
+    ai: env.OPENAI_API_KEY
+      ? new OpenAIResponsesProvider({ apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL || 'gpt-5.6-luna' })
+      : env.DEEPSEEK_API_KEY
       ? new DeepSeekProvider({ apiKey: env.DEEPSEEK_API_KEY, model: env.DEEPSEEK_MODEL || 'deepseek-v4-flash' })
       : new UnavailableAIProvider()
   };

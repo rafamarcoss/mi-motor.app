@@ -7,6 +7,7 @@
     "build:preview": "node scripts/build.mjs --preview",
     "editorial:plan": "node scripts/editorial.mjs --dry-run",
     "editorial:generate": "node scripts/editorial.mjs",
+    "gsc:report": "node scripts/gsc-report.mjs",
     "validate": "node scripts/validate-site.mjs"
   },
   "engines": { "node": ">=22" }
