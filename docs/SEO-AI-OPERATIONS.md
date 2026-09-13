@@ -12,7 +12,7 @@ La calculadora mantiene sus fórmulas locales deterministas. La IA solo normaliz
 - Worker secret `OPENAI_API_KEY`; variable opcional `OPENAI_MODEL=gpt-5.6-luna`. Usa Responses API con `reasoning.low` y `store:false`. Fallback explícito: `DEEPSEEK_API_KEY` con `DEEPSEEK_MODEL`.
 - KV `MIMOTOR_KV` y `RATE_LIMIT_SECRET`: cuota y agregados IA. Sin KV no se ejecuta IA.
 - GTM/GA4: cargar el contenedor de forma externa y escuchar `dataLayer`. Eventos: `seo_article_view`, `article_calculator_cta_click`, `calculator_started`, `calculator_completed`, `calculator_failed`. La atribución usa UTM/referrer en `sessionStorage`, sin PII.
-- GSC: secret `GSC_ACCESS_TOKEN` y variable `GSC_SITE_URL`. `npm run gsc:report` compara 28 días cerrados con los 28 anteriores; sin ambas variables deja un informe de bloqueo, sin métricas ficticias.
+- GSC: secret `GSC_SERVICE_ACCOUNT_JSON` de una cuenta de servicio con permiso de lectura y variable `GSC_SITE_URL`. `npm run gsc:report` crea su token OAuth temporal y compara 28 días cerrados con los 28 anteriores; sin ambas variables deja un informe de bloqueo, sin métricas ficticias.
 
 ## Coste y telemetría
 

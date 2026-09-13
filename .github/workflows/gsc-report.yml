@@ -18,7 +18,7 @@ jobs:
         with: { node-version: 22 }
       - run: npm run gsc:report
         env:
-          GSC_ACCESS_TOKEN: ${{ secrets.GSC_ACCESS_TOKEN }}
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
           GSC_SITE_URL: ${{ vars.GSC_SITE_URL }}
       - uses: actions/upload-artifact@v4
         with: { name: gsc-report, path: reports/gsc-baseline.json, retention-days: 90 }
